@@ -1,39 +1,69 @@
 #include "raylib.h"
+#include "rlgl.h"
+#include "raymath.h"
+
 #include <vector>
 #include <iostream>
 
-int main() {
-    // Initialize the window
-    const int screenWidth = 800;
-    const int screenHeight = 600;
-    InitWindow(screenWidth, screenHeight, "Raylib C++17 Example");
+// รวมไฟล์ Header ของแต่ละคน
+#include "enemy.h"
+#include "player.h"
+#include "item.h"
+#include "map.h"
+#include "ui.h"
 
-    // Define a vector to hold circle positions
-    std::vector<Vector2> circles;
-    circles.push_back({200.0f, 300.0f});
-    circles.push_back({400.0f, 300.0f});
-    circles.push_back({600.0f, 300.0f});
+// MAIN GAME
+int main()
+{
+    // ตั้งค่าหน้าต่างเกม
+    const int screenWidth = 720;
+    const int screenHeight = 720;
 
-    SetTargetFPS(60);
+    InitWindow(screenWidth, screenHeight, "ชื่อเกมยังไม่ตั้ง");
+    SetTargetFPS(60); // ล็อกไว้ที่ 60 fps
+    HideCursor();
+    
+    Vector2 plPos = { screenWidth/2.0f, screenHeight/2.0f }; // ตำแหน่งเริ่มต้นของผู้เล่น (อยู่ตรงกลางหน้าจอ)
+    player pl = { plPos, {20.0f, 20.0f}, 2.0f, RED };
 
-    // Main game loop
-    while (!WindowShouldClose()) {
-        // Update logic can be added here
+    //กล้อง
+    Camera2D camera = { 0 };
+    camera.zoom = 1.0f;
+    camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+    camera.target = (Vector2){ pl.pos.x + 10.0f, pl.pos.y + 10.0f };
 
-        // Start drawing
+    // Main Game Loop
+    while (!WindowShouldClose())  // กดปิด หรือ ESC 
+    {
+        // Update
+        //----------------------------------------------------------------------------------
+        camera.target = (Vector2){ pl.pos.x + 10.0f, pl.pos.y + 10.0f }; // ให้กล้องตามผู้เล่น
+        
+        // Zoom ด้วย Mouse Wheel
+        float scale = 0.2f*GetMouseWheelMove();
+        camera.zoom = Clamp(expf(logf(camera.zoom)+scale), 0.125f, 64.0f);
+
+        if (IsKeyPressed(KEY_R)) camera.zoom = 1.0f; // รีเซ็ตการซูม
+
+        plMovement(pl.pos, pl.speed);
+        plCollision(pl.pos, pl.size, pl.speed);
+        //----------------------------------------------------------------------------------
+
+        // Draw
+        //----------------------------------------------------------------------------------
         BeginDrawing();
-        ClearBackground(RAYWHITE);
 
-        // Draw circles from the vector
-        for (const auto& circle : circles) {
-            DrawCircleV(circle, 50.0f, BLUE);
-        }
+            gridmap(camera,pl.pos, pl.size, pl.color);
+            textKey(pl.speed);
+            cursor(GetMousePosition());
 
-        DrawText("C++17 with Raylib", 10, 10, 20, DARKGRAY);
         EndDrawing();
+        //----------------------------------------------------------------------------------
     }
 
-    // Cleanup and close the window
+    // คืนค่าหน่วยความจำ
     CloseWindow();
+
     return 0;
 }
+
