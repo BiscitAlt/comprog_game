@@ -1,10 +1,11 @@
+#ifndef ENEMY_H
+#define ENEMY_H
+
+// รวม header ไม่ใส่ใน .cpp เพราะจะได้ไม่ต้อง include ซ้ำหลายๆ ที่
 #include "raylib.h"
+#include "map.h"
+#include "item.h"
 
-#include <vector>
-#include <iostream>
+//ยังไม่ทำอะไรเลย แค่สร้างไว้ก่อน
 
-struct Enemy {
-    Vector2 position;
-    bool active;
-    int type; // 0 = Slime, 1 = Goblin
-};
+#endif

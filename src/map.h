@@ -1,34 +1,21 @@
+#ifndef MAP_H
+#define MAP_H
+
+// รวม header ไม่ใส่ใน .cpp เพราะจะได้ไม่ต้อง include ซ้ำหลายๆ ที่
 #include "raylib.h"
-#include "rlgl.h"
-#include "raymath.h"
 
-#include <vector>
-#include <iostream>
+class Map {
+public:
+    // กำหนดขนาด Grid (เช่น 30x30 ช่อง)
+    static const int rows = 30;
+    static const int cols = 30;
+    static const int tileSize = 20; // หนึ่งช่องกว้าง 20 pixel
+    
+    int data[rows][cols]; // 0 = พื้น, 1 = กำแพง
 
-void gridmap(Camera2D camera, Vector2 plPos, Vector2 plSize, Color plColor){
-    ClearBackground(RAYWHITE);
+    Map();      // Constructor (ใช้ตั้งค่าแมพตอนเริ่มเกม)
+    bool IsWall(float x, float y); // ฟังก์ชันเช็คว่าตำแหน่ง (x, y) เป็นกำแพงหรือไม่
+    void Draw(); // ฟังก์ชันวาดแมพ
+};
 
-            BeginMode2D(camera);
-                // วาดกริดเพื่อให้เห็นการเคลื่อนที่ของกล้อง
-                rlPushMatrix();
-                    rlTranslatef(0, 25*50, 0);
-                    rlRotatef(90, 1, 0, 0);
-                    DrawGrid(100, 20);
-                rlPopMatrix();
-                DrawRectangleV({50, 0}, {50, 50}, GRAY); // วาดกำแพงตัวอย่าง
-                DrawRectangleV(plPos, plSize, plColor); // วาดผู้เล่น
-
-            EndMode2D();
-}
-
-void plCollision(Vector2 &plPos, Vector2 plSize, float plSpeed)
-{
-    if (CheckCollisionRecs((Rectangle){plPos.x, plPos.y, plSize.x, plSize.y}, (Rectangle){50, 0, 50, 50}))
-    {
-        // ชนกำแพง
-        if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) plPos.x -= plSpeed;
-        if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) plPos.x += plSpeed;
-        if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W)) plPos.y += plSpeed;
-        if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) plPos.y -= plSpeed;  
-    }
-}
+#endif

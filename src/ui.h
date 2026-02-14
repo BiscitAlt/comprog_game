@@ -1,18 +1,10 @@
+#ifndef UI_H
+#define UI_H
+
+// รวม header ไม่ใส่ใน .cpp เพราะจะได้ไม่ต้อง include ซ้ำหลายๆ ที่
 #include "raylib.h"
 
-#include <vector>
-#include <iostream>
+void textKey(float speed);
+void cursor(Vector2 mousePos);
 
-void textKey(float speed)
-{
-    DrawText("WASD or Arrow keys to move", 10, 700, 20, DARKGRAY);
-    DrawText("Mouse Wheel to Zoom in-out", 10, 680, 20, DARKGRAY);
-    DrawText("R to reset Zoom", 10, 660, 20, DARKGRAY);
-    DrawText(TextFormat("Speed: %f", speed), 10, 10, 20, DARKGRAY);
-}
-
-void cursor(Vector2 mousePos)
-{
-    DrawCircleV(mousePos, 4, BLACK);
-    DrawTextEx(GetFontDefault(), TextFormat("[%i, %i]", GetMouseX(), GetMouseY()), {mousePos.x + 5, mousePos.y + 5}, 20, 2, BLACK);
-}
+#endif

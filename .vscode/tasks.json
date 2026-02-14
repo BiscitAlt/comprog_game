@@ -7,9 +7,9 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "${workspaceFolder}/src/*.cpp",
                 "-o",
-                "${workspaceFolder}\\${fileBasenameNoExtension}.exe",
+                "${workspaceFolder}\\game.exe",
                 "-I",
                 "${workspaceFolder}\\lib\\include",
                 "-L",
