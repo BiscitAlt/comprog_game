@@ -6,6 +6,19 @@
 #include "map.h"
 #include "item.h"
 
-//ยังไม่ทำอะไรเลย แค่สร้างไว้ก่อน
+//คร่าวๆ 
+struct Enemy
+{
+    Vector2 pos; 
+    Vector2 size;
+    float speed;
+    int hp;
+    Color color;
+};
+
+// ประกาศฟังก์ชัน
+void InitEnemy(Enemy& e, Vector2 pos); // ค่าพื้นฐาน
+void UpdateEnemy(Enemy& e, Vector2 playerPos); 
+void DrawEnemy(const Enemy& e); 
 
 #endif

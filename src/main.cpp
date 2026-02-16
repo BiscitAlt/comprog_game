@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "rlgl.h"
 #include "raymath.h"
+#include <vector>
 
 // รวมไฟล์ Header ของแต่ละคน
 #include "enemy.h"
@@ -22,6 +23,21 @@ int main()
     
     Vector2 plPos = { screenWidth/2.0f, screenHeight/2.0f }; // ตำแหน่งเริ่มต้นของผู้เล่น (อยู่ตรงกลางหน้าจอ)
     player pl = { plPos, {20.0f, 20.0f}, 2.0f, RED };
+    
+    int enemyCount = GetRandomValue(2, 5);
+    std::vector<Enemy> enemies;
+
+for (int i = 0; i < enemyCount; i++)
+{
+    Enemy e;
+    Vector2 spawnPos = {
+        plPos.x + (float)GetRandomValue(-200, 200),
+        plPos.y + (float)GetRandomValue(-200, 200)
+    };
+
+    InitEnemy(e, spawnPos);
+    enemies.push_back(e);
+}
 
     SetRandomSeed(GetTime());
     Map gridMap(30, 30, 20, GetRandomValue(0, 50)); // สร้างแมพขนาด 30x30 ช่อง แต่ละช่องกว้าง 20 pixel และมีกล่องสุ่มเพิ่มในแมพ 20 กล่อง
@@ -45,7 +61,13 @@ int main()
 
         if (IsKeyPressed(KEY_R)) camera.zoom = 1.0f; // รีเซ็ตการซูม
 
-        plCollision(pl.pos, pl.size, pl.speed, gridMap);
+        plCollision(pl.pos, pl.size, pl.speed, gridMap); // เช็คการชนของผู้เล่นกับกำแพง
+
+        for (Enemy& e : enemies)
+{
+        UpdateEnemy(e, pl.pos);
+}
+
 
         //----------------------------------------------------------------------------------
 
@@ -57,6 +79,10 @@ int main()
 
             gridMap.Draw();
             DrawRectangleV(pl.pos, pl.size, pl.color); // วาดผู้เล่น
+           for (const Enemy& e : enemies)
+{
+             DrawEnemy(e);
+}
 
             EndMode2D();
 
@@ -72,4 +98,5 @@ int main()
 
     return 0;
 }
+
 
