@@ -9,10 +9,12 @@
 //คร่าวๆ 
 struct Enemy
 {
-    Vector2 pos; 
+    Vector2 pos;
     Vector2 size;
     float speed;
     int hp;
+    int atk;
+    float attackTimer;
     Color color;
 };
 

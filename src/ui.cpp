@@ -5,6 +5,7 @@ void textKey(float speed)
     DrawText("WASD or Arrow keys to move", 10, 700, 20, DARKGRAY);
     DrawText("Mouse Wheel to Zoom in-out", 10, 680, 20, DARKGRAY);
     DrawText("R to reset Zoom", 10, 660, 20, DARKGRAY);
+        DrawText("SPACE to Attack", 10, 640, 20, MAROON);
     DrawText(TextFormat("Speed: %f", speed), 10, 10, 20, DARKGRAY);
 }
 

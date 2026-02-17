@@ -12,6 +12,8 @@ struct player
     Vector2 size;
     float speed;
     Color color;
+    int hp;
+    int hpMax;
 };
 
 void plMovement(Vector2 &plPos, float speed);
