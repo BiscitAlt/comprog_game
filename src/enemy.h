@@ -1,4 +1,4 @@
-#ifndef ENEMY_H 1
+#ifndef ENEMY_H
 #define ENEMY_H
 
 // รวม header ไม่ใส่ใน .cpp เพราะจะได้ไม่ต้อง include ซ้ำหลายๆ ที่
