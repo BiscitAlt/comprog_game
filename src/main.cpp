@@ -2,6 +2,7 @@
 #include "rlgl.h"
 #include "raymath.h"
 #include <vector>
+#include <string>
 
 // รวมไฟล์ Header ของแต่ละคน
 #include "enemy.h"
@@ -9,6 +10,8 @@
 #include "item.h"
 #include "map.h"
 #include "ui.h"
+#include "database.h"
+
 
 // MAIN GAME
 int main()
@@ -22,7 +25,7 @@ int main()
     HideCursor();
     
     Vector2 plPos = { screenWidth/2.0f, screenHeight/2.0f }; // ตำแหน่งเริ่มต้นของผู้เล่น (อยู่ตรงกลางหน้าจอ)
-    player pl = { plPos, {20.0f, 20.0f}, 2.0f, RED };
+    player pl = { plPos, {20.0f, 20.0f}, 2.0f, RED ,"Hero", 100, 100, 50, 50, 10, {}};
     
     int enemyCount = GetRandomValue(2, 5);
     std::vector<Enemy> enemies;
@@ -35,7 +38,7 @@ for (int i = 0; i < enemyCount; i++)
         plPos.y + (float)GetRandomValue(-200, 200)
     };
 
-    InitEnemy(e, spawnPos);
+    InitEnemy(e, spawnPos,"Slime", 100, 10);
     enemies.push_back(e);
 }
 
