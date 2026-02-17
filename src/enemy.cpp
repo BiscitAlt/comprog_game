@@ -7,7 +7,7 @@ void InitEnemy(Enemy& e, Vector2 pos)
     e.size = { 18, 18 }; // ขนาดของศัตรู
     e.speed = 1.0f; // ความเร็ว
     e.hp = 1; // เลือด
-    e.atk = 5;
+    e.atk = 4;
     e.attackTimer = 0.0f;
     e.color = BLUE;
 }
