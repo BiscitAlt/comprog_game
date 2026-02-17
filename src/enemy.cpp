@@ -19,19 +19,28 @@ void InitEnemy(Enemy& e, Vector2 pos, const MonsterTemplate& tmpl)
 void UpdateEnemy(Enemy& e, Vector2 playerPos)
 {
     if (e.hp <= 0) return;
-    
-    Vector2 dir = Vector2Subtract(playerPos, e.pos); 
-    float distance = Vector2Length(dir); 
-    
 
+    float moveSpeed = e.speed;
+    if (e.hp < (e.maxHp * 0.3f)) {
+        moveSpeed *= 2.0f; 
+        e.color = RED; 
+    }
+
+    Vector2 dir = Vector2Subtract(playerPos, e.pos); 
+    float distance = Vector2Length(dir);
+    
     if (distance > e.attackRange) 
     {
         dir = Vector2Normalize(dir); 
-        e.pos = Vector2Add(e.pos, Vector2Scale(dir, e.speed)); 
+        e.pos = Vector2Add(e.pos, Vector2Scale(dir, moveSpeed));
     }
 }
 
 void DrawEnemy(const Enemy& e) 
 {
     DrawRectangleV(e.pos, e.size, e.color);
+    float healthBarWidth = e.size.x; 
+    float currentHealthWidth = (float)e.hp / e.maxHp * healthBarWidth;
+    DrawRectangle(e.pos.x, e.pos.y - 10, healthBarWidth, 4, BLACK);
+    DrawRectangle(e.pos.x, e.pos.y - 10, currentHealthWidth, 4, RED);
 }
