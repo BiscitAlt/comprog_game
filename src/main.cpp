@@ -30,17 +30,22 @@ int main()
     int enemyCount = GetRandomValue(2, 5);
     std::vector<Enemy> enemies;
 
-for (int i = 0; i < enemyCount; i++)
-{
-    Enemy e;
-    Vector2 spawnPos = {
-        plPos.x + (float)GetRandomValue(-200, 200),
-        plPos.y + (float)GetRandomValue(-200, 200)
-    };
+    std::vector<MonsterTemplate> monsterDB = GetMonsterDb();
 
-    InitEnemy(e, spawnPos,"Slime", 100, 10);
-    enemies.push_back(e);
-}
+    for (int i = 0; i < enemyCount; i++)
+    {
+        Enemy e;
+        Vector2 spawnPos = {
+            plPos.x + (float)GetRandomValue(-200, 200),
+            plPos.y + (float)GetRandomValue(-200, 200)
+        };
+
+        int randomIndex = GetRandomValue(0, monsterDB.size() - 1);
+
+        InitEnemy(e, spawnPos, monsterDB[randomIndex]);
+        
+        enemies.push_back(e);
+    }
 
     SetRandomSeed(GetTime());
     Map gridMap(30, 30, 20, GetRandomValue(0, 50)); // สร้างแมพขนาด 30x30 ช่อง แต่ละช่องกว้าง 20 pixel และมีกล่องสุ่มเพิ่มในแมพ 20 กล่อง
