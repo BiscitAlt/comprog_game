@@ -5,54 +5,41 @@
 #include "raymath.h"
 #include <vector>
 
-enum EnemyType
-{
-    MELEE,
-    RANGED,
-    EXPLODER,
-    POISON
-    
-};
+enum EnemyType { MELEE, RANGED, EXPLODER, POISON };
 
-struct Bullet
-{
+struct Bullet {
     Vector2 pos;
     Vector2 velocity;
     float radius;
     bool active;
 };
 
-struct Enemy
-{
+struct Enemy {
     Vector2 pos;
     Vector2 size;
     float speed;
     int hp;
+    int hpMax;
     Color color;
-
-    // melee
+    EnemyType type;
+    
     float attackTimer;
     int atk;
 
-    // type
-    EnemyType type;
-
-    // ranged
+    // Ranged
     float shootTimer;
     float shootCooldown;
     float shootRange;
     std::vector<Bullet> bullets;
 
-    // poison
+    // Poison
     float poisonRadius;
-    int poisonDamage;
-    float poisonInterval;
     float poisonTimer;
+    float poisonInterval;
     bool poisonActive;
 
-    // exploder
+    // Exploder
     float explodeRadius;
-    int explodeDamage;
 };
 
 void InitEnemy(Enemy& e, Vector2 pos, EnemyType type);

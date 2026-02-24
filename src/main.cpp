@@ -2,321 +2,142 @@
 #include "rlgl.h"
 #include "raymath.h"
 #include <vector>
+#include <algorithm>
 
-// รวมไฟล์ Header ของแต่ละคน
 #include "enemy.h"
 #include "player.h"
 #include "item.h"
 #include "map.h"
 #include "ui.h"
 
-// MAIN GAME
-int main()
-{
-    // ตั้งค่าหน้าต่างเกม
+struct PlayerBullet {
+    Vector2 pos;
+    Vector2 vel;
+    bool active;
+};
+
+int main() {
     const int screenWidth = 720;
     const int screenHeight = 720;
 
-    InitWindow(screenWidth, screenHeight, "ชื่อเกมยังไม่ตั้ง");
-    SetTargetFPS(60); // ล็อกไว้ที่ 60 fps
+    InitWindow(screenWidth, screenHeight, "ชื่อเกมยังไม่ได้ตั้ง");
+    SetTargetFPS(60);
     HideCursor();
-    
-    Vector2 plPos = { screenWidth/2.0f, screenHeight/2.0f }; // ตำแหน่งเริ่มต้นของผู้เล่น (อยู่ตรงกลางหน้าจอ)
-    player pl = { plPos, {20.0f, 20.0f}, 2.0f, RED, 100, 100 };
-     
-    int enemyCount = GetRandomValue(2, 5);
+
+    player pl = { {screenWidth/2.0f, screenHeight/2.0f}, {22, 22}, 2.4f, 100.0f, RED, 100, 100, 1, 0, 10 };
+
     std::vector<Enemy> enemies;
+    std::vector<Gem> gems;           
+    std::vector<PlayerBullet> pBullets; 
 
-    for (int i = 0; i < enemyCount; i++) // สุ่มememy 2-5 ตัว
-    {
-        Enemy e;
-        Vector2 spawnPos = {
-            plPos.x + (float)GetRandomValue(-200, 200),
-            plPos.y + (float)GetRandomValue(-200, 200)
-        };
+    Map gridMap(40, 40, 25, 60); 
+    Camera2D camera = { {screenWidth/2.0f, screenHeight/2.0f}, {0,0}, 0.0f, 1.0f };
 
-        int r = GetRandomValue(0,3);
-EnemyType type;
+    float plInvincTimer = 0;
+    float shootTimer = 0;
+    float screenShake = 0; 
 
-if (r == 0) type = MELEE;
-else if (r == 1) type = RANGED;
-else if (r == 2) type = POISON;
-else type = EXPLODER;
+    while (!WindowShouldClose()) {
+        float dt = GetFrameTime();
+        if (plInvincTimer > 0) plInvincTimer -= dt;
+        if (screenShake > 0) screenShake -= dt;
 
-
-InitEnemy(e, spawnPos, type);
-
-        enemies.push_back(e);
-    }
-
-    SetRandomSeed(GetTime());
-    Map gridMap(30, 30, 20, GetRandomValue(0, 50)); // สร้างแมพขนาด 30x30 ช่อง แต่ละช่องกว้าง 20 pixel และมีกล่องสุ่มเพิ่มในแมพ 20 กล่อง
-
-    //กล้อง
-    Camera2D camera = { 0 };
-    camera.zoom = 1.0f;
-    camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
-    camera.target = (Vector2){ pl.pos.x + 10.0f, pl.pos.y + 10.0f };
-    
-    float plHitTimer = 0.0f; // ตัวกระพริบอตอนโดนตี
-    float plInvincibleTimer = 0.0f; // ตัวป้องกันการโดนตี(อมตะชั่วคราว)
-
-    // Main Game Loop
-    while (!WindowShouldClose())  // กดปิด หรือ ESC 
-    {
-        // ลดเวลาตัวกระพริบจนหมด
-        if (plHitTimer > 0)
-            plHitTimer -= GetFrameTime();
-
-        // ลดเวลาอมตะจนหมด
-        if (plInvincibleTimer > 0)
-            plInvincibleTimer -= GetFrameTime();
-
-        // Update
-        //----------------------------------------------------------------------------------
-        camera.target = (Vector2){ pl.pos.x + 10.0f, pl.pos.y + 10.0f }; // ให้กล้องตามผู้เล่น
+       
+        plUpdate(pl, gridMap);
         
-        // Zoom ด้วย Mouse Wheel
-        float scale = 0.2f * GetMouseWheelMove();
-        camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.125f, 64.0f);
-
-        if (IsKeyPressed(KEY_R)) camera.zoom = 1.0f; // รีเซ็ตการซูม
-
-        plCollision(pl.pos, pl.size, pl.speed, gridMap); // เช็คการชนของผู้เล่นกับกำแพง
-
-        for (Enemy& e : enemies) // enemy เคลื่อนตามผู้เล่น
-        {
-            UpdateEnemy(e, pl.pos);
+       
+        Vector2 finalTarget = { pl.pos.x + 11, pl.pos.y + 11 };
+        if (screenShake > 0) {
+            finalTarget.x += GetRandomValue(-6, 6);
+            finalTarget.y += GetRandomValue(-6, 6);
         }
+        camera.target = finalTarget;
 
-        Rectangle playerRec = { pl.pos.x, pl.pos.y, pl.size.x, pl.size.y }; // สร้างขอบเขตการชน
-
-        // ศัตรูโจมตีผู้เล่น
-        for (Enemy& e : enemies)
-        {
-            e.attackTimer -= GetFrameTime();
-
-            Rectangle enemyRec = { e.pos.x, e.pos.y, e.size.x, e.size.y };
-
-            if (CheckCollisionRecs(playerRec, enemyRec)
-                && e.attackTimer <= 0
-                && plInvincibleTimer <= 0)
-            {
-                pl.hp -= e.atk;
-
-                e.attackTimer = 0.5f;
-                plInvincibleTimer = 0.7f;
-                plHitTimer = 0.3f;
-
-                if (pl.hp < 0) pl.hp = 0;
+      
+        shootTimer += dt;
+        if (shootTimer >= 0.6f && !enemies.empty()) { 
+            float minDist = 400.0f; 
+            int targetIdx = -1;
+            for (int i = 0; i < enemies.size(); i++) {
+                float d = Vector2Distance(pl.pos, enemies[i].pos);
+                if (d < minDist) { minDist = d; targetIdx = i; }
+            }
+            if (targetIdx != -1) {
+                Vector2 dir = Vector2Normalize(Vector2Subtract(enemies[targetIdx].pos, pl.pos));
+                pBullets.push_back({ pl.pos, Vector2Scale(dir, 450.0f), true });
+                shootTimer = 0;
             }
         }
-        // กระสุนศัตรูยิงโดนผู้เล่น
-        for (Enemy& e : enemies)
-        {
-            if (e.type == RANGED)
-            {
-                for (auto& b : e.bullets)
-                {
-                    if (b.active)
-                    {
-                        Rectangle bulletRec = {
-                            b.pos.x - b.radius,
-                            b.pos.y - b.radius,
-                            b.radius * 2,
-                            b.radius * 2
-                        };
 
-                        if (CheckCollisionRecs(playerRec, bulletRec)
-                            && plInvincibleTimer <= 0)
-                        {
-                            pl.hp -= 5;
-                            b.active = false;
-
-                            plInvincibleTimer = 0.7f;
-                            plHitTimer = 0.3f;
-
-                            if (pl.hp < 0) pl.hp = 0;
-                        }
-                    }
-                }
-            }
-            if (e.type == RANGED)
-         {
-        for (auto& b : e.bullets)
-        {
-            if (b.active)
-            {
-                Rectangle bulletRec = {
-                    b.pos.x - b.radius,
-                    b.pos.y - b.radius,
-                    b.radius * 2,
-                    b.radius * 2
-                };
-
-                if (CheckCollisionRecs(playerRec, bulletRec)
-                    && plInvincibleTimer <= 0)
-                {
-                    pl.hp -= 5;
-                    b.active = false;
-
-                    plInvincibleTimer = 0.7f;
-                    plHitTimer = 0.3f;
-
-                    if (pl.hp < 0) pl.hp = 0;
+        
+        for (auto& b : pBullets) {
+            b.pos = Vector2Add(b.pos, Vector2Scale(b.vel, dt));
+            for (auto& e : enemies) {
+                if (CheckCollisionCircleRec(b.pos, 5, {e.pos.x, e.pos.y, e.size.x, e.size.y})) {
+                    e.hp -= 2; b.active = false; 
                 }
             }
         }
-    }   
-}
-        for (Enemy& e : enemies)
-        {
-            Vector2 dir = Vector2Subtract(pl.pos, e.pos);
-            float distance = Vector2Length(dir);
+        pBullets.erase(std::remove_if(pBullets.begin(), pBullets.end(), [](PlayerBullet& b){ return !b.active; }), pBullets.end());
 
-            if (e.type == MELEE)
-            {
-                if (distance > 1)
-                {
-                    dir = Vector2Normalize(dir);
-                    e.pos = Vector2Add(e.pos, Vector2Scale(dir, e.speed));
-                }
-            }
-        if (e.type == POISON && e.poisonActive)
-        {
-        float dist = Vector2Distance(
-            (Vector2){pl.pos.x + pl.size.x/2, pl.pos.y + pl.size.y/2},
-            e.pos
-        );
-
-        if (dist <= e.poisonRadius &&
-            e.poisonTimer >= e.poisonInterval &&
-            plInvincibleTimer <= 0)
-        {
-            pl.hp -= e.poisonDamage;
-            e.poisonTimer = 0.0f;
-
-            plInvincibleTimer = 0.3f;
-            plHitTimer = 0.2f;
-
-            if (pl.hp < 0) pl.hp = 0;
+        
+        if (enemies.size() < 7) {
+            Enemy ne;
+            Vector2 sp = { pl.pos.x + GetRandomValue(-500, 500), pl.pos.y + GetRandomValue(-500, 500) };
+            if (Vector2Distance(sp, pl.pos) > 200) { InitEnemy(ne, sp, (EnemyType)GetRandomValue(0, 3)); enemies.push_back(ne); }
         }
-    }
-}
-        for (int i = enemies.size() - 1; i >= 0; i--)
-{
-    Enemy& e = enemies[i];
 
-    if (e.type == EXPLODER)
-    {
-        float dist = Vector2Distance(
-            (Vector2){pl.pos.x + pl.size.x/2, pl.pos.y + pl.size.y/2},
-            e.pos
-        );
-
-        if (dist <= 40.0f) // ระยะที่ทำให้ระเบิด
-        {
-            // เช็คผู้เล่นอยู่ในรัศมีไหม
-            if (dist <= e.explodeRadius && plInvincibleTimer <= 0)
-            {
-                pl.hp -= e.explodeDamage;
-                plInvincibleTimer = 0.7f;
-                plHitTimer = 0.3f;
-
-                if (pl.hp < 0) pl.hp = 0;
+        for (int i = enemies.size() - 1; i >= 0; i--) {
+            UpdateEnemy(enemies[i], pl.pos);
+            
+            
+            if (enemies[i].hp <= 0) {
+                gems.push_back({ enemies[i].pos, 2, true });
+                enemies.erase(enemies.begin() + i);
+                continue;
             }
 
-            // 💥 ลบศัตรูออกทันที (หายไปเลย)
-            enemies.erase(enemies.begin() + i);
-            continue;
-        }
-    }
-}
-
-
-        // ผู้เล่นโจมตี + ลบศัตรูที่ตาย
-        if (IsKeyPressed(KEY_SPACE))
-        {
-            for (int i = enemies.size() - 1; i >= 0; i--)
-            {
-                Rectangle enemyRec = {
-                    enemies[i].pos.x, enemies[i].pos.y,
-                    enemies[i].size.x, enemies[i].size.y
-                };
-
-                if (CheckCollisionRecs(playerRec, enemyRec))
-                {
-                    enemies[i].hp -= 1;
-
-                    if (enemies[i].hp <= 0)
-                    {
-                        enemies.erase(enemies.begin() + i);
-                    }
+           
+            if (CheckCollisionRecs({pl.pos.x, pl.pos.y, pl.size.x, pl.size.y}, {enemies[i].pos.x, enemies[i].pos.y, enemies[i].size.x, enemies[i].size.y})) {
+                if (plInvincTimer <= 0) {
+                    pl.hp -= enemies[i].atk;
+                    plInvincTimer = 0.6f;
+                    screenShake = 0.25f; 
+                    if (enemies[i].type == EXPLODER) enemies.erase(enemies.begin() + i);
                 }
             }
         }
 
-        if (pl.hp <= 0) // Game over
-        {
-            BeginDrawing();
-            ClearBackground(BLACK);
-            DrawText("GAME OVER",
-                screenWidth / 2 - 120,
-                screenHeight / 2 - 20,
-                40, RED);
-            EndDrawing();
-
-            WaitTime(2.0);
-            break;
+        for (int i = gems.size() - 1; i >= 0; i--) {
+            float d = Vector2Distance(pl.pos, gems[i].pos);
+            if (d < 80.0f) gems[i].pos = Vector2MoveTowards(gems[i].pos, pl.pos, 4.0f); 
+            if (d < 15.0f) {
+                pl.exp += gems[i].value;
+                gems.erase(gems.begin() + i);
+                if (pl.exp >= pl.expNext) { pl.level++; pl.exp = 0; pl.expNext += 10; pl.hp = pl.hpMax; }
+            }
         }
 
-        //----------------------------------------------------------------------------------
+        if (pl.hp <= 0) break;
 
-        // Draw
-        //----------------------------------------------------------------------------------
+        
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground(BLACK);
         BeginMode2D(camera);
-
-        gridMap.Draw();
-        // กระตอนโดนโจมตี
-        if (plInvincibleTimer <= 0 || ((int)(plInvincibleTimer * 10) % 2 == 0))
-        {
-            DrawRectangleV(pl.pos, pl.size, pl.color); // วาดผู้เล่น
-        }
-
-        for (const Enemy& e : enemies)
-        {
-            DrawEnemy(e);
-           if (e.type == POISON && e.poisonActive)
-{
-    DrawCircleV(e.pos, e.poisonRadius, Fade(GREEN, 0.2f));
-    DrawCircleLinesV(e.pos, e.poisonRadius, DARKGREEN);
-}
-        }
-
+            gridMap.Draw();
+            for (const auto& g : gems) DrawCircleV(g.pos, 5, SKYBLUE); 
+            for (const auto& b : pBullets) DrawCircleV(b.pos, 5, YELLOW); 
+            
+            if (plInvincTimer <= 0 || (int)(GetTime()*15)%2 == 0) DrawRectangleV(pl.pos, pl.size, pl.color);
+            for (const auto& e : enemies) DrawEnemy(e);
         EndMode2D();
 
-        float barWidth = 200;
-        float barHeight = 20;
-        float hpPercent = (float)pl.hp / pl.hpMax;
-
-        DrawRectangle(10, 40, barWidth, barHeight, DARKGRAY);
-        DrawRectangle(10, 40, barWidth * hpPercent, barHeight, RED);
-        DrawRectangleLines(10, 40, barWidth, barHeight, BLACK);
-
-        DrawText(TextFormat("HP: %d / %d", pl.hp, pl.hpMax), 10, 65, 20, BLACK);
-
-        textKey(pl.speed);
-        cursor(GetMousePosition());
-
+        
+        DrawRectangle(10, 10, 200, 20, DARKGRAY);
+        DrawRectangle(10, 10, 200 * ((float)pl.hp/pl.hpMax), 20, RED);
+        DrawText(TextFormat("LV: %i  EXP: %i/%i", pl.level, pl.exp, pl.expNext), 10, 40, 20, WHITE);
         EndDrawing();
-        //----------------------------------------------------------------------------------
     }
-
-    // คืนค่าหน่วยความจำ
     CloseWindow();
-
     return 0;
 }
-
