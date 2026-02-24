@@ -1,10 +1,24 @@
 #ifndef UI_H
 #define UI_H
 
-// รวม header ไม่ใส่ใน .cpp เพราะจะได้ไม่ต้อง include ซ้ำหลายๆ ที่
 #include "raylib.h"
+#include "player.h"
 
-void textKey(float speed);
-void cursor(Vector2 mousePos);
+// โครงสร้างข้อมูลใหม่ (ใส่แทนที่ void เดิม)
+struct PlayerInfo {
+    int hp;
+    int maxHp;
+    float stamina;
+    float speed;
+    int floor;
+    int gold;
+    std::vector<Skill> skills; 
+
+};
+
+// เปลี่ยนชื่อฟังก์ชันใหม่ให้ครอบคลุม
+void DrawRoguelikeHUD(PlayerInfo player, Vector2 mousePos);
+
+
 
 #endif
