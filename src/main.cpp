@@ -35,7 +35,17 @@ int main()
             plPos.y + (float)GetRandomValue(-200, 200)
         };
 
-        InitEnemy(e, spawnPos);
+        int r = GetRandomValue(0,3);
+EnemyType type;
+
+if (r == 0) type = MELEE;
+else if (r == 1) type = RANGED;
+else if (r == 2) type = POISON;
+else type = EXPLODER;
+
+
+InitEnemy(e, spawnPos, type);
+
         enemies.push_back(e);
     }
 
@@ -101,6 +111,128 @@ int main()
                 if (pl.hp < 0) pl.hp = 0;
             }
         }
+        // กระสุนศัตรูยิงโดนผู้เล่น
+        for (Enemy& e : enemies)
+        {
+            if (e.type == RANGED)
+            {
+                for (auto& b : e.bullets)
+                {
+                    if (b.active)
+                    {
+                        Rectangle bulletRec = {
+                            b.pos.x - b.radius,
+                            b.pos.y - b.radius,
+                            b.radius * 2,
+                            b.radius * 2
+                        };
+
+                        if (CheckCollisionRecs(playerRec, bulletRec)
+                            && plInvincibleTimer <= 0)
+                        {
+                            pl.hp -= 5;
+                            b.active = false;
+
+                            plInvincibleTimer = 0.7f;
+                            plHitTimer = 0.3f;
+
+                            if (pl.hp < 0) pl.hp = 0;
+                        }
+                    }
+                }
+            }
+            if (e.type == RANGED)
+         {
+        for (auto& b : e.bullets)
+        {
+            if (b.active)
+            {
+                Rectangle bulletRec = {
+                    b.pos.x - b.radius,
+                    b.pos.y - b.radius,
+                    b.radius * 2,
+                    b.radius * 2
+                };
+
+                if (CheckCollisionRecs(playerRec, bulletRec)
+                    && plInvincibleTimer <= 0)
+                {
+                    pl.hp -= 5;
+                    b.active = false;
+
+                    plInvincibleTimer = 0.7f;
+                    plHitTimer = 0.3f;
+
+                    if (pl.hp < 0) pl.hp = 0;
+                }
+            }
+        }
+    }   
+}
+        for (Enemy& e : enemies)
+        {
+            Vector2 dir = Vector2Subtract(pl.pos, e.pos);
+            float distance = Vector2Length(dir);
+
+            if (e.type == MELEE)
+            {
+                if (distance > 1)
+                {
+                    dir = Vector2Normalize(dir);
+                    e.pos = Vector2Add(e.pos, Vector2Scale(dir, e.speed));
+                }
+            }
+        if (e.type == POISON && e.poisonActive)
+        {
+        float dist = Vector2Distance(
+            (Vector2){pl.pos.x + pl.size.x/2, pl.pos.y + pl.size.y/2},
+            e.pos
+        );
+
+        if (dist <= e.poisonRadius &&
+            e.poisonTimer >= e.poisonInterval &&
+            plInvincibleTimer <= 0)
+        {
+            pl.hp -= e.poisonDamage;
+            e.poisonTimer = 0.0f;
+
+            plInvincibleTimer = 0.3f;
+            plHitTimer = 0.2f;
+
+            if (pl.hp < 0) pl.hp = 0;
+        }
+    }
+}
+        for (int i = enemies.size() - 1; i >= 0; i--)
+{
+    Enemy& e = enemies[i];
+
+    if (e.type == EXPLODER)
+    {
+        float dist = Vector2Distance(
+            (Vector2){pl.pos.x + pl.size.x/2, pl.pos.y + pl.size.y/2},
+            e.pos
+        );
+
+        if (dist <= 40.0f) // ระยะที่ทำให้ระเบิด
+        {
+            // เช็คผู้เล่นอยู่ในรัศมีไหม
+            if (dist <= e.explodeRadius && plInvincibleTimer <= 0)
+            {
+                pl.hp -= e.explodeDamage;
+                plInvincibleTimer = 0.7f;
+                plHitTimer = 0.3f;
+
+                if (pl.hp < 0) pl.hp = 0;
+            }
+
+            // 💥 ลบศัตรูออกทันที (หายไปเลย)
+            enemies.erase(enemies.begin() + i);
+            continue;
+        }
+    }
+}
+
 
         // ผู้เล่นโจมตี + ลบศัตรูที่ตาย
         if (IsKeyPressed(KEY_SPACE))
@@ -156,6 +288,11 @@ int main()
         for (const Enemy& e : enemies)
         {
             DrawEnemy(e);
+           if (e.type == POISON && e.poisonActive)
+{
+    DrawCircleV(e.pos, e.poisonRadius, Fade(GREEN, 0.2f));
+    DrawCircleLinesV(e.pos, e.poisonRadius, DARKGREEN);
+}
         }
 
         EndMode2D();
