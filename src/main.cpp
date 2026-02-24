@@ -3,183 +3,374 @@
 #include "raymath.h"
 #include <vector>
 
-// รวมไฟล์ Header ของแต่ละคน
+// รวมไฟล์ Header
 #include "enemy.h"
 #include "player.h"
 #include "item.h"
 #include "map.h"
 #include "ui.h"
+#include "sword.h"
+#include "gun.h"
+#include "bullet.h"
+#include "summon.h"
+#include "summon_staff.h"
+#include "heal_potion.h"
 
-// MAIN GAME
+// ===== Magic (เพิ่ม) =====
+#include "magic_weapon.h"
+#include "magic_projectile.h"
+
+// ===== ประเภทอาวุธ =====
+enum WeaponType {
+    WEAPON_NONE,          // มือเปล่า
+    WEAPON_SWORD,         // ดาบ
+    WEAPON_GUN,           // ปืน
+    WEAPON_SUMMON_STAFF,  // คทาซัมมอน
+    WEAPON_MAGIC          // ★ เวทมนตร์ (เพิ่ม)
+};
+
 int main()
 {
-    // ตั้งค่าหน้าต่างเกม
+    // =========================
+    // Init
+    // =========================
     const int screenWidth = 720;
     const int screenHeight = 720;
 
     InitWindow(screenWidth, screenHeight, "ชื่อเกมยังไม่ตั้ง");
-    SetTargetFPS(60); // ล็อกไว้ที่ 60 fps
+    SetTargetFPS(60);
     HideCursor();
-    
-    Vector2 plPos = { screenWidth/2.0f, screenHeight/2.0f }; // ตำแหน่งเริ่มต้นของผู้เล่น (อยู่ตรงกลางหน้าจอ)
-    player pl = { plPos, {20.0f, 20.0f}, 2.0f, RED, 100, 100 };
-     
+
+    // ===== Player =====
+    Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
+    player pl = { plPos, {20, 20}, 2.0f, RED, 100, 100 };
+
+    // ===== Sword =====
+    Sword sword;
+    InitSword(sword, { pl.pos.x + 100, pl.pos.y });
+
+    // ===== Gun =====
+    Gun gun;
+    InitGun(gun, { pl.pos.x - 120, pl.pos.y });
+    std::vector<Bullet> bullets;
+
+    // ===== Summon Staff =====
+    SummonStaff staff;
+    InitSummonStaff(staff, { pl.pos.x + 150, pl.pos.y });
+    std::vector<Summon> summons;
+
+    // ===== Heal Potion =====
+    HealPotion healPotion;
+    InitHealPotion(
+        healPotion,
+        { pl.pos.x + 60, pl.pos.y + 60 },
+        30
+    );
+
+    // ===== Magic (เพิ่ม) =====
+    MagicWeapon magic;
+    InitMagicWeapon(magic, { pl.pos.x - 160, pl.pos.y });
+    std::vector<MagicProjectile> magicProjectiles;
+
+    // ===== Weapon state =====
+    WeaponType currentWeapon = WEAPON_NONE;
+
+    // ===== Enemy =====
     int enemyCount = GetRandomValue(2, 5);
     std::vector<Enemy> enemies;
-
-    for (int i = 0; i < enemyCount; i++) // สุ่มememy 2-5 ตัว
+    for (int i = 0; i < enemyCount; i++)
     {
         Enemy e;
         Vector2 spawnPos = {
             plPos.x + (float)GetRandomValue(-200, 200),
             plPos.y + (float)GetRandomValue(-200, 200)
         };
-
         InitEnemy(e, spawnPos);
         enemies.push_back(e);
     }
 
+    // ===== Map =====
     SetRandomSeed(GetTime());
-    Map gridMap(30, 30, 20, GetRandomValue(0, 50)); // สร้างแมพขนาด 30x30 ช่อง แต่ละช่องกว้าง 20 pixel และมีกล่องสุ่มเพิ่มในแมพ 20 กล่อง
+    Map gridMap(30, 30, 20, GetRandomValue(0, 50));
 
-    //กล้อง
+    // ===== Camera =====
     Camera2D camera = { 0 };
     camera.zoom = 1.0f;
-    camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
-    camera.target = (Vector2){ pl.pos.x + 10.0f, pl.pos.y + 10.0f };
-    
-    float plHitTimer = 0.0f; // ตัวกระพริบอตอนโดนตี
-    float plInvincibleTimer = 0.0f; // ตัวป้องกันการโดนตี(อมตะชั่วคราว)
+    camera.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
 
-    // Main Game Loop
-    while (!WindowShouldClose())  // กดปิด หรือ ESC 
+    float plHitTimer = 0.0f;
+    float plInvincibleTimer = 0.0f;
+
+    // =========================
+    // Game Loop
+    // =========================
+    while (!WindowShouldClose())
     {
-        // ลดเวลาตัวกระพริบจนหมด
-        if (plHitTimer > 0)
-            plHitTimer -= GetFrameTime();
+        float dt = GetFrameTime();
 
-        // ลดเวลาอมตะจนหมด
-        if (plInvincibleTimer > 0)
-            plInvincibleTimer -= GetFrameTime();
+        if (plHitTimer > 0) plHitTimer -= dt;
+        if (plInvincibleTimer > 0) plInvincibleTimer -= dt;
 
-        // Update
-        //----------------------------------------------------------------------------------
-        camera.target = (Vector2){ pl.pos.x + 10.0f, pl.pos.y + 10.0f }; // ให้กล้องตามผู้เล่น
-        
-        // Zoom ด้วย Mouse Wheel
+        // ===== Camera update =====
+        camera.target = { pl.pos.x + 10, pl.pos.y + 10 };
         float scale = 0.2f * GetMouseWheelMove();
         camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.125f, 64.0f);
+        if (IsKeyPressed(KEY_R)) camera.zoom = 1.0f;
 
-        if (IsKeyPressed(KEY_R)) camera.zoom = 1.0f; // รีเซ็ตการซูม
+        // ===== Player movement =====
+        plCollision(pl.pos, pl.size, pl.speed, gridMap);
 
-        plCollision(pl.pos, pl.size, pl.speed, gridMap); // เช็คการชนของผู้เล่นกับกำแพง
+        // ===== Heal Potion update ===== (ของใหม่)
+        UpdateHealPotion(healPotion, pl);
 
-        for (Enemy& e : enemies) // enemy เคลื่อนตามผู้เล่น
-        {
+        // ===== Enemy update =====
+        for (Enemy& e : enemies)
             UpdateEnemy(e, pl.pos);
+
+        Rectangle playerRec = {
+            pl.pos.x, pl.pos.y,
+            pl.size.x, pl.size.y
+        };
+
+        // ===== Mouse direction =====
+        Vector2 mouseWorld = GetScreenToWorld2D(GetMousePosition(), camera);
+        Vector2 diff = Vector2Subtract(mouseWorld, pl.pos);
+        Vector2 dir = (Vector2Length(diff) > 0.01f)
+            ? Vector2Normalize(diff)
+            : (Vector2){ 1, 0 };
+
+        // =========================
+        // Weapon pickup
+        // =========================
+
+        // ----- Sword -----
+        UpdateSword(sword, pl.pos, pl.size, dir);
+        if (sword.pickedUp && currentWeapon != WEAPON_SWORD)
+        {
+            if (currentWeapon == WEAPON_GUN)
+            {
+                gun.pickedUp = false;
+                gun.pos = Vector2Add(pl.pos, { -40, 0 });
+            }
+            if (currentWeapon == WEAPON_SUMMON_STAFF)
+            {
+                staff.pickedUp = false;
+                staff.pos = Vector2Add(pl.pos, { 40, 0 });
+            }
+            if (currentWeapon == WEAPON_MAGIC)
+            {
+                magic.pickedUp = false;
+                magic.pos = Vector2Add(pl.pos, { 60, 0 });
+            }
+            currentWeapon = WEAPON_SWORD;
         }
 
-        Rectangle playerRec = { pl.pos.x, pl.pos.y, pl.size.x, pl.size.y }; // สร้างขอบเขตการชน
+        // ----- Gun -----
+        UpdateGun(gun, pl.pos, pl.size);
+        if (gun.pickedUp && currentWeapon != WEAPON_GUN)
+        {
+            if (currentWeapon == WEAPON_SWORD)
+            {
+                sword.pickedUp = false;
+                sword.pos = Vector2Add(pl.pos, { 40, 0 });
+            }
+            if (currentWeapon == WEAPON_SUMMON_STAFF)
+            {
+                staff.pickedUp = false;
+                staff.pos = Vector2Add(pl.pos, { -40, 0 });
+            }
+            if (currentWeapon == WEAPON_MAGIC)
+            {
+                magic.pickedUp = false;
+                magic.pos = Vector2Add(pl.pos, { 60, 0 });
+            }
+            currentWeapon = WEAPON_GUN;
+        }
 
-        // ศัตรูโจมตีผู้เล่น
+        // ----- Summon Staff -----
+        UpdateSummonStaff(staff, pl.pos, pl.size, dt);
+        if (staff.pickedUp && currentWeapon != WEAPON_SUMMON_STAFF)
+        {
+            if (currentWeapon == WEAPON_SWORD)
+            {
+                sword.pickedUp = false;
+                sword.pos = Vector2Add(pl.pos, { 40, 0 });
+            }
+            if (currentWeapon == WEAPON_GUN)
+            {
+                gun.pickedUp = false;
+                gun.pos = Vector2Add(pl.pos, { -40, 0 });
+            }
+            if (currentWeapon == WEAPON_MAGIC)
+            {
+                magic.pickedUp = false;
+                magic.pos = Vector2Add(pl.pos, { 60, 0 });
+            }
+            currentWeapon = WEAPON_SUMMON_STAFF;
+        }
+
+        // ----- Magic (เพิ่ม) -----
+        UpdateMagicWeapon(magic, pl.pos, pl.size, dt);
+        if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
+        {
+            if (currentWeapon == WEAPON_SWORD)
+            {
+                sword.pickedUp = false;
+                sword.pos = Vector2Add(pl.pos, { 40, 0 });
+            }
+            if (currentWeapon == WEAPON_GUN)
+            {
+                gun.pickedUp = false;
+                gun.pos = Vector2Add(pl.pos, { -40, 0 });
+            }
+            if (currentWeapon == WEAPON_SUMMON_STAFF)
+            {
+                staff.pickedUp = false;
+                staff.pos = Vector2Add(pl.pos, { -60, 0 });
+            }
+            currentWeapon = WEAPON_MAGIC;
+        }
+
+        // =========================
+        // Attack
+        // =========================
+
+        // ยิงปืน
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && currentWeapon == WEAPON_GUN)
+        {
+            ShootGun(gun, bullets, pl.pos, pl.size, dir);
+        }
+
+        // ใช้คทาซัมมอน
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
+            && currentWeapon == WEAPON_SUMMON_STAFF
+            && staff.pickedUp)
+        {
+            UseSummonStaff(staff, summons, pl.pos);
+        }
+
+        // ใช้เวทมนตร์ (เพิ่ม)
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
+            && currentWeapon == WEAPON_MAGIC
+            && magic.pickedUp)
+        {
+            UseMagicWeapon(magic, magicProjectiles, pl.pos, dir);
+        }
+
+        // อัปเดตกระสุน
+        for (Bullet& b : bullets) UpdateBullet(b);
+
+        // อัปเดตเวทมนตร์ (เพิ่ม)
+        for (MagicProjectile& m : magicProjectiles)
+            UpdateMagicProjectile(m, dt);
+
+        // ===== Update Summon =====
+        for (Summon& s : summons)
+        {
+            if (!s.active) continue;
+            if (!enemies.empty())
+                UpdateSummon(s, dt, enemies[0].pos);
+        }
+
+        // ===== Summon โดนศัตรู =====
+        for (Summon& s : summons)
+        {
+            if (!s.active) continue;
+            for (int j = enemies.size() - 1; j >= 0; j--)
+            {
+                Rectangle enemyRec = {
+                    enemies[j].pos.x, enemies[j].pos.y,
+                    enemies[j].size.x, enemies[j].size.y
+                };
+
+                if (CheckCollisionCircleRec(s.pos, s.radius, enemyRec))
+                {
+                    enemies[j].hp -= s.damage;
+                    s.active = false;
+                    if (enemies[j].hp <= 0)
+                        enemies.erase(enemies.begin() + j);
+                    break;
+                }
+            }
+        }
+
+        // ลบ summon ที่หมดอายุ
+        for (int i = summons.size() - 1; i >= 0; i--)
+            if (!summons[i].active)
+                summons.erase(summons.begin() + i);
+
+        // ===== ศัตรูโจมตีผู้เล่น =====
         for (Enemy& e : enemies)
         {
-            e.attackTimer -= GetFrameTime();
-
-            Rectangle enemyRec = { e.pos.x, e.pos.y, e.size.x, e.size.y };
+            e.attackTimer -= dt;
+            Rectangle enemyRec = {
+                e.pos.x, e.pos.y,
+                e.size.x, e.size.y
+            };
 
             if (CheckCollisionRecs(playerRec, enemyRec)
                 && e.attackTimer <= 0
                 && plInvincibleTimer <= 0)
             {
                 pl.hp -= e.atk;
-
                 e.attackTimer = 0.5f;
                 plInvincibleTimer = 0.7f;
                 plHitTimer = 0.3f;
-
-                if (pl.hp < 0) pl.hp = 0;
             }
         }
 
-        // ผู้เล่นโจมตี + ลบศัตรูที่ตาย
-        if (IsKeyPressed(KEY_SPACE))
-        {
-            for (int i = enemies.size() - 1; i >= 0; i--)
-            {
-                Rectangle enemyRec = {
-                    enemies[i].pos.x, enemies[i].pos.y,
-                    enemies[i].size.x, enemies[i].size.y
-                };
+        if (pl.hp <= 0) break;
 
-                if (CheckCollisionRecs(playerRec, enemyRec))
-                {
-                    enemies[i].hp -= 1;
-
-                    if (enemies[i].hp <= 0)
-                    {
-                        enemies.erase(enemies.begin() + i);
-                    }
-                }
-            }
-        }
-
-        if (pl.hp <= 0) // Game over
-        {
-            BeginDrawing();
-            ClearBackground(BLACK);
-            DrawText("GAME OVER",
-                screenWidth / 2 - 120,
-                screenHeight / 2 - 20,
-                40, RED);
-            EndDrawing();
-
-            WaitTime(2.0);
-            break;
-        }
-
-        //----------------------------------------------------------------------------------
-
+        // =========================
         // Draw
-        //----------------------------------------------------------------------------------
+        // =========================
         BeginDrawing();
         ClearBackground(RAYWHITE);
         BeginMode2D(camera);
 
         gridMap.Draw();
-        // กระตอนโดนโจมตี
-        if (plInvincibleTimer <= 0 || ((int)(plInvincibleTimer * 10) % 2 == 0))
+
+        // ===== Heal Potion draw ===== (ของใหม่)
+        DrawHealPotion(healPotion);
+
+        if (plInvincibleTimer <= 0
+            || ((int)(plInvincibleTimer * 10) % 2 == 0))
         {
-            DrawRectangleV(pl.pos, pl.size, pl.color); // วาดผู้เล่น
+            DrawRectangleV(pl.pos, pl.size, pl.color);
         }
 
-        for (const Enemy& e : enemies)
-        {
-            DrawEnemy(e);
-        }
+        for (const Enemy& e : enemies) DrawEnemy(e);
+
+        // วาดซัมมอน
+        for (const Summon& s : summons) DrawSummon(s);
+
+        // วาดอาวุธ
+        if (!sword.pickedUp || currentWeapon == WEAPON_SWORD)
+            DrawSword(sword, pl.pos, pl.size, dir);
+
+        if (!gun.pickedUp || currentWeapon == WEAPON_GUN)
+            DrawGun(gun, pl.pos, pl.size, dir);
+
+        DrawSummonStaff(staff, pl.pos, dir);
+
+        // วาด Magic (เพิ่ม)
+        DrawMagicWeapon(magic, pl.pos, dir);
+        for (const MagicProjectile& m : magicProjectiles)
+            DrawMagicProjectile(m);
+
+        for (const Bullet& b : bullets) DrawBullet(b);
 
         EndMode2D();
 
-        float barWidth = 200;
-        float barHeight = 20;
-        float hpPercent = (float)pl.hp / pl.hpMax;
+        DrawText(
+            TextFormat("HP: %d / %d", pl.hp, pl.hpMax),
+            10, 40, 20, BLACK
+        );
 
-        DrawRectangle(10, 40, barWidth, barHeight, DARKGRAY);
-        DrawRectangle(10, 40, barWidth * hpPercent, barHeight, RED);
-        DrawRectangleLines(10, 40, barWidth, barHeight, BLACK);
-
-        DrawText(TextFormat("HP: %d / %d", pl.hp, pl.hpMax), 10, 65, 20, BLACK);
-
-        textKey(pl.speed);
         cursor(GetMousePosition());
-
         EndDrawing();
-        //----------------------------------------------------------------------------------
     }
 
-    // คืนค่าหน่วยความจำ
     CloseWindow();
-
     return 0;
 }
-
