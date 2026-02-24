@@ -1,26 +1,62 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
-// รวม header ไม่ใส่ใน .cpp เพราะจะได้ไม่ต้อง include ซ้ำหลายๆ ที่
 #include "raylib.h"
-#include "map.h"
-#include "item.h"
+#include "raymath.h"
+#include <vector>
 
-//คร่าวๆ 
+enum EnemyType
+{
+    MELEE,
+    RANGED,
+    EXPLODER,
+    POISON
+    
+};
+
+struct Bullet
+{
+    Vector2 pos;
+    Vector2 velocity;
+    float radius;
+    bool active;
+};
+
 struct Enemy
 {
     Vector2 pos;
     Vector2 size;
     float speed;
     int hp;
-    int atk;
-    float attackTimer;
     Color color;
+
+    // melee
+    float attackTimer;
+    int atk;
+
+    // type
+    EnemyType type;
+
+    // ranged
+    float shootTimer;
+    float shootCooldown;
+    float shootRange;
+    std::vector<Bullet> bullets;
+
+    // poison
+    float poisonRadius;
+    int poisonDamage;
+    float poisonInterval;
+    float poisonTimer;
+    bool poisonActive;
+
+    // exploder
+    float explodeRadius;
+    int explodeDamage;
 };
 
-// ประกาศฟังก์ชัน
-void InitEnemy(Enemy& e, Vector2 pos); // ค่าพื้นฐาน
-void UpdateEnemy(Enemy& e, Vector2 playerPos); 
-void DrawEnemy(const Enemy& e); 
+void InitEnemy(Enemy& e, Vector2 pos, EnemyType type);
+void UpdateEnemy(Enemy& e, Vector2 playerPos);
+void DrawEnemy(const Enemy& e);
 
 #endif
