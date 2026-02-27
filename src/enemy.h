@@ -10,7 +10,7 @@
 //คร่าวๆ 
 struct Enemy
 {
-    Vector2 pos; 
+    Vector2 pos;
     Vector2 size;
     float speed;
     Color color;
