@@ -8,7 +8,7 @@ void InitLootBox(LootBox& box, Vector2 pos)
     box.active = true;   // สำคัญมาก ถ้าไม่มี = ชนแล้วไม่เกิดอะไร
 }
 
-// ===== ตรวจชน + สุ่มไอเทม =====
+// ===== กดEเปิด + สุ่มไอเทม =====
 void UpdateLootBox(
     LootBox& box,
     Rectangle playerRec,
@@ -16,6 +16,8 @@ void UpdateLootBox(
     bool& opened
 )
 {
+    opened = false;
+
     if (!box.active) return;
 
     Rectangle boxRec = {
@@ -23,11 +25,12 @@ void UpdateLootBox(
         box.size.x, box.size.y
     };
 
-    if (CheckCollisionRecs(playerRec, boxRec))
+    if (CheckCollisionRecs(playerRec, boxRec)
+        && IsKeyPressed(KEY_E))
     {
         outLoot = (LootType)GetRandomValue(0, 4);
         opened = true;
-        box.active = false;   // เปิดแล้วหาย
+        box.active = false;
     }
 }
 
