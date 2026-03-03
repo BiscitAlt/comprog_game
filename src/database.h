@@ -38,7 +38,7 @@ inline std::vector<Skill> GetDefaultSkills() {
         {"Healing Light", -40, 20},
         {"Thunder Strike", 50, 25},
         {"Ice Spike", 25, 10},
-        {"Ultimate Raid", 100, 45}
+        {"Ultimate Raid", 100, 45}n
     };
 }
 
