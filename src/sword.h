@@ -2,40 +2,81 @@
 #define SWORD_H
 
 #include "raylib.h"
+#include <vector>
 
-// =======================
-// โครงสร้างดาบ
-// =======================
-struct Sword
+// ================= SWORD TYPE =================
+enum SwordType
 {
-    Vector2 pos;        // ตำแหน่งดาบ (ตอนอยู่บนพื้น)
-    bool pickedUp;      // ถูกเก็บแล้วหรือยัง
-    bool swinging;      // กำลังฟันอยู่ไหม
-    float swingTimer;   // เวลาอนิเมชันฟัน
+    SWORD_ENERGY,
+    SWORD_SPIN,
+    SWORD_DASH
 };
 
-// ฟังก์ชันดาบ
-void InitSword(Sword& s, Vector2 pos);
+// ================= SWORD WAVE =================
+struct SwordWave
+{
+    Vector2 pos;
+    Vector2 dir;
+    float speed;
+    int damage;
+    bool active;
+};
+
+// ================= SWORD =================
+struct Sword
+{
+    Vector2 pos;
+    bool pickedUp;
+
+    SwordType type;
+
+    float cooldown;
+    float timer;
+
+    int damage;
+
+    // mana (ใช้กับ ENERGY และ SPIN)
+    float manaCost;
+
+    // spin
+    float spinRadius;
+
+    // dash
+    float dashPower;
+};
+
+// ================= FUNCTION PROTOTYPES =================
+void InitSword(Sword& s, Vector2 dropPos, SwordType type);
 
 void UpdateSword(
     Sword& s,
-    Vector2 playerPos,
-    Vector2 playerSize,
+    Vector2 plPos,
+    Vector2 plSize,
     Vector2 dir
 );
 
-Rectangle GetSwordHitbox(
-    const Sword& s,
-    Vector2 playerPos,
-    Vector2 playerSize,
-    Vector2 dir
+void UseSword(
+    Sword& s,
+    Vector2& playerPos,
+    Vector2 dir,
+    std::vector<SwordWave>& waves,
+    float& playerMana
+);
+
+void UpdateSwordWaves(
+    std::vector<SwordWave>& waves,
+    float dt
 );
 
 void DrawSword(
-    const Sword& s,
-    Vector2 playerPos,
-    Vector2 playerSize,
+    Sword& s,
+    Vector2 plPos,
+    Vector2 plSize,
     Vector2 dir
+);
+
+void DrawSwordWaves(
+    const std::vector<SwordWave>& waves
 );
 
 #endif

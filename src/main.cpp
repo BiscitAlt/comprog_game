@@ -1,4 +1,4 @@
-    #include "raylib.h"
+   #include "raylib.h"
     #include "rlgl.h"
     #include "raymath.h"
     #include <vector>
@@ -46,7 +46,9 @@
 
         // ===== Sword =====
         Sword sword;
-        InitSword(sword, { pl.pos.x + 100, pl.pos.y });
+        SwordType randomType = (SwordType)GetRandomValue(0, 2);
+        InitSword(sword, { pl.pos.x + 100, pl.pos.y }, randomType);
+        std::vector<SwordWave> swordWaves;
 
         // ===== Gun =====
         Gun gun;
@@ -288,6 +290,14 @@
                 ShootGun(gun,bullets,pl.pos,pl.size,dir,pl.mana);
             }
 
+            // ใช้ดาบ
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
+            && currentWeapon == WEAPON_SWORD
+            && sword.pickedUp)
+            {
+            UseSword(sword, pl.pos, dir, swordWaves, pl.mana);
+            }
+
             // ใช้คทาซัมมอน
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
                 && currentWeapon == WEAPON_SUMMON_STAFF
@@ -306,6 +316,8 @@
 
             // อัปเดตกระสุน
             for (Bullet& b : bullets) UpdateBullet(b);
+
+            UpdateSwordWaves(swordWaves, dt); // คลื่นดาบ
 
             // อัปเดตเวทมนตร์
             for (MagicProjectile& m : magicProjectiles)
@@ -422,6 +434,7 @@
                 DrawMagicProjectile(m);
 
             for (const Bullet& b : bullets) DrawBullet(b);
+            DrawSwordWaves(swordWaves);
 
             EndMode2D();
 

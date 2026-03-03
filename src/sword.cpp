@@ -1,130 +1,214 @@
 #include "sword.h"
-#include "raylib.h"
 #include "raymath.h"
+#include <cmath>
 
-// ================================
-// สร้างดาบเริ่มต้น (วางบนพื้น)
-// ================================
-void InitSword(Sword& s, Vector2 pos)
+// ================= INIT =================
+void InitSword(Sword& s, Vector2 dropPos, SwordType type)
 {
-    s.pos = pos;
+    s.pos = dropPos;
     s.pickedUp = false;
-    s.swinging = false;
-    s.swingTimer = 0.0f;
+    s.type = type;
+    s.timer = 0;
+
+    switch (s.type)
+    {
+        case SWORD_ENERGY:
+            s.cooldown = 0.5f;
+            s.damage = 25;
+            s.manaCost = 10;
+            break;
+
+        case SWORD_SPIN:
+            s.cooldown = 1.0f;
+            s.damage = 40;
+            s.spinRadius = 80;
+            s.manaCost = 30;
+            break;
+
+        case SWORD_DASH:
+            s.cooldown = 1.2f;
+            s.damage = 50;
+            s.dashPower = 300;
+            break;
+    }
 }
 
-// ================================
-// อัปเดตสถานะดาบ
-// - เก็บดาบ
-// - เริ่มฟัน
-// - จับเวลาฟัน
-// ================================
-void UpdateSword(
-    Sword& s,
-    Vector2 playerPos,
-    Vector2 playerSize,
-    Vector2 dir)
+// ================= UPDATE =================
+void UpdateSword(Sword& s, Vector2 plPos, Vector2 plSize, Vector2 dir)
 {
-    // ถ้ายังไม่เก็บ → เช็กชนผู้เล่น
+    if (s.timer > 0)
+        s.timer -= GetFrameTime();
+
     if (!s.pickedUp)
     {
-        Rectangle swordRec = {
-            s.pos.x, s.pos.y,
-            16, 6
-        };
+        Rectangle swordRec = { s.pos.x, s.pos.y, 30, 10 };
+        Rectangle plRec = { plPos.x, plPos.y, plSize.x, plSize.y };
 
-        Rectangle playerRec = {
-            playerPos.x, playerPos.y,
-            playerSize.x, playerSize.y
-        };
-
-        if (CheckCollisionRecs(swordRec, playerRec))
-        {
+        if (CheckCollisionRecs(swordRec, plRec))
             s.pickedUp = true;
-        }
+    }
+}
 
+// ================= USE =================
+void UseSword(
+    Sword& s,
+    Vector2& playerPos,
+    Vector2 dir,
+    std::vector<SwordWave>& waves,
+    float& playerMana
+)
+{
+    if (s.timer > 0)
         return;
+
+    // ===== ENERGY MANA CHECK =====
+    if (s.type == SWORD_ENERGY)
+    {
+        if (playerMana < s.manaCost)
+            return;
+
+        playerMana -= s.manaCost;
     }
 
-    // กด SPACE เพื่อฟัน
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !s.swinging)
-{
-    s.swinging = true;
-    s.swingTimer = 0.2f;
-}
-    // นับเวลาฟัน
-    if (s.swinging)
+    // ===== SPIN MANA CHECK =====
+    if (s.type == SWORD_SPIN)
     {
-        s.swingTimer -= GetFrameTime();
+        if (playerMana < s.manaCost)
+            return;
 
-        if (s.swingTimer <= 0.0f)
+        playerMana -= s.manaCost;
+    }
+
+    s.timer = s.cooldown;
+
+    // ===== ENERGY =====
+    if (s.type == SWORD_ENERGY)
+    {
+        SwordWave w;
+        w.pos = playerPos;
+        w.dir = dir;
+        w.speed = 600;
+        w.damage = s.damage;
+        w.active = true;
+
+        waves.push_back(w);
+    }
+
+    // ===== SPIN =====
+    else if (s.type == SWORD_SPIN)
+    {
+        for (int i = 0; i < 8; i++)
         {
-            s.swinging = false;
+            float angle = (2 * PI / 8) * i;
+
+            SwordWave w;
+            w.pos = playerPos;
+            w.dir = { cosf(angle), sinf(angle) };
+            w.speed = 500;
+            w.damage = s.damage;
+            w.active = true;
+
+            waves.push_back(w);
+        }
+    }
+
+    // ===== DASH =====
+    else if (s.type == SWORD_DASH)
+    {
+        playerPos.x += dir.x * s.dashPower;
+        playerPos.y += dir.y * s.dashPower;
+
+        SwordWave w;
+        w.pos = playerPos;
+        w.dir = dir;
+        w.speed = 700;
+        w.damage = s.damage;
+        w.active = true;
+
+        waves.push_back(w);
+    }
+}
+
+// ================= UPDATE WAVES =================
+void UpdateSwordWaves(std::vector<SwordWave>& waves, float dt)
+{
+    for (auto& w : waves)
+    {
+        if (!w.active)
+            continue;
+
+        w.pos.x += w.dir.x * w.speed * dt;
+        w.pos.y += w.dir.y * w.speed * dt;
+
+        if (w.pos.x < -100 || w.pos.x > 3000 ||
+            w.pos.y < -100 || w.pos.y > 3000)
+        {
+            w.active = false;
         }
     }
 }
 
-// =================================
-// hitbox ดาบตอนฟัน
-// =================================
-Rectangle GetSwordHitbox(
-    const Sword& s,
-    Vector2 playerPos,
-    Vector2 playerSize,
-    Vector2 dir)
+// ================= DRAW SWORD =================
+void DrawSword(Sword& s, Vector2 plPos, Vector2 plSize, Vector2 dir)
 {
-    Vector2 center = {
-        playerPos.x + playerSize.x / 2,
-        playerPos.y + playerSize.y / 2
-    };
-
-    Rectangle hitbox = {
-        center.x + dir.x * 25 - 8,
-        center.y + dir.y * 25 - 4,
-        16,
-        8
-    };
-
-    return hitbox;
-}
-
-// =================================
-// วาดดาบ (พื้น / ถือ / ฟัน)
-// =================================
-void DrawSword(
-    const Sword& s,
-    Vector2 playerPos,
-    Vector2 playerSize,
-    Vector2 dir)
-{
-    // ยังไม่เก็บ → วาดบนพื้น
     if (!s.pickedUp)
     {
-        DrawRectangleV(s.pos, {16, 6}, GRAY);
+        Color c;
+
+        switch (s.type)
+{
+    case SWORD_ENERGY: c = SKYBLUE; break;
+    case SWORD_SPIN:   c = ORANGE;  break;
+    case SWORD_DASH:   c = RED;     break;
+}
+
+        DrawRectangleV(s.pos, { 30, 10 }, c);
         return;
     }
 
     Vector2 center = {
-        playerPos.x + playerSize.x / 2,
-        playerPos.y + playerSize.y / 2
+        plPos.x + plSize.x / 2,
+        plPos.y + plSize.y / 2
     };
 
-    // ดาบตอนถือ
-    Rectangle holdSword = {
-        center.x + dir.x * 12,
-        center.y + dir.y * 12,
-        14,
-        4
-    };
+    DrawCircleV(center, 5, BLACK);
+}
 
-    DrawRectangleRec(holdSword, DARKGRAY);
-
-    // ดาบตอนฟัน
-    if (s.swinging)
+// ================= DRAW WAVES =================
+void DrawSwordWaves(const std::vector<SwordWave>& waves)
+{
+    for (const auto& w : waves)
     {
-        Rectangle hitbox =
-            GetSwordHitbox(s, playerPos, playerSize, dir);
+        if (!w.active)
+            continue;
 
-        DrawRectangleRec(hitbox, ORANGE);
+        float radius = 70.0f;
+        int segments = 16;
+        float arcSize = PI / 8.0f;
+
+        float baseAngle = atan2f(w.dir.y, w.dir.x);
+        float startAngle = baseAngle - arcSize;
+        float endAngle = baseAngle + arcSize;
+
+        Vector2 prevPoint = {
+            w.pos.x + cosf(startAngle) * radius,
+            w.pos.y + sinf(startAngle) * radius
+        };
+
+        for (int i = 1; i <= segments; i++)
+        {
+            float t = (float)i / segments;
+            float angle = startAngle + (endAngle - startAngle) * t;
+
+            Vector2 newPoint = {
+                w.pos.x + cosf(angle) * radius,
+                w.pos.y + sinf(angle) * radius
+            };
+
+            DrawLineEx(prevPoint, newPoint, 6, SKYBLUE);
+            DrawLineEx(prevPoint, newPoint, 2, WHITE);
+
+            prevPoint = newPoint;
+        }
     }
 }
