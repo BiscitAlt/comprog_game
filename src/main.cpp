@@ -12,8 +12,6 @@
     #include "sword.h"
     #include "gun.h"
     #include "bullet.h"
-    #include "summon.h"
-    #include "summon_staff.h"
     #include "heal_potion.h"
     #include "magic_weapon.h"
     #include "magic_projectile.h"
@@ -24,7 +22,6 @@
         WEAPON_NONE,          // มือเปล่า
         WEAPON_SWORD,         // ดาบ
         WEAPON_GUN,           // ปืน
-        WEAPON_SUMMON_STAFF,  // คทาซัมมอน
         WEAPON_MAGIC          // ★ เวทมนตร์ (เพิ่ม)
     };
 
@@ -55,11 +52,6 @@
         GunType type = (GunType)GetRandomValue(0, 2);
         InitGun(gun, { pl.pos.x - 120, pl.pos.y }, type);
         std::vector<Bullet> bullets;
-
-        // ===== Summon Staff =====
-        SummonStaff staff;
-        InitSummonStaff(staff, { pl.pos.x + 150, pl.pos.y });
-        std::vector<Summon> summons;
 
         // ===== Heal Potion =====
         HealPotion healPotion;
@@ -169,11 +161,6 @@
             currentWeapon = WEAPON_GUN;
             break;
 
-            case LOOT_SUMMON:
-            staff.pickedUp = true;
-            currentWeapon = WEAPON_SUMMON_STAFF;
-            break;
-
             case LOOT_MAGIC:
             magic.pickedUp = true;
             currentWeapon = WEAPON_MAGIC;
@@ -201,11 +188,7 @@
                     gun.pickedUp = false;
                     gun.pos = Vector2Add(pl.pos, { -40, 0 });
                 }
-                if (currentWeapon == WEAPON_SUMMON_STAFF)
-                {
-                    staff.pickedUp = false;
-                    staff.pos = Vector2Add(pl.pos, { 40, 0 });
-                }
+
                 if (currentWeapon == WEAPON_MAGIC)
                 {
                     magic.pickedUp = false;
@@ -223,39 +206,13 @@
                     sword.pickedUp = false;
                     sword.pos = Vector2Add(pl.pos, { 40, 0 });
                 }
-                if (currentWeapon == WEAPON_SUMMON_STAFF)
-                {
-                    staff.pickedUp = false;
-                    staff.pos = Vector2Add(pl.pos, { -40, 0 });
-                }
+
                 if (currentWeapon == WEAPON_MAGIC)
                 {
                     magic.pickedUp = false;
                     magic.pos = Vector2Add(pl.pos, { 60, 0 });
                 }
                 currentWeapon = WEAPON_GUN;
-            }
-
-            // ----- Summon Staff -----
-            UpdateSummonStaff(staff, pl.pos, pl.size, dt);
-            if (staff.pickedUp && currentWeapon != WEAPON_SUMMON_STAFF)
-            {
-                if (currentWeapon == WEAPON_SWORD)
-                {
-                    sword.pickedUp = false;
-                    sword.pos = Vector2Add(pl.pos, { 40, 0 });
-                }
-                if (currentWeapon == WEAPON_GUN)
-                {
-                    gun.pickedUp = false;
-                    gun.pos = Vector2Add(pl.pos, { -40, 0 });
-                }
-                if (currentWeapon == WEAPON_MAGIC)
-                {
-                    magic.pickedUp = false;
-                    magic.pos = Vector2Add(pl.pos, { 60, 0 });
-                }
-                currentWeapon = WEAPON_SUMMON_STAFF;
             }
 
             // ----- Magic  -----
@@ -271,11 +228,6 @@
                 {
                     gun.pickedUp = false;
                     gun.pos = Vector2Add(pl.pos, { -40, 0 });
-                }
-                if (currentWeapon == WEAPON_SUMMON_STAFF)
-                {
-                    staff.pickedUp = false;
-                    staff.pos = Vector2Add(pl.pos, { -60, 0 });
                 }
                 currentWeapon = WEAPON_MAGIC;
             }
@@ -298,13 +250,6 @@
             UseSword(sword, pl.pos, dir, swordWaves, pl.mana);
             }
 
-            // ใช้คทาซัมมอน
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
-                && currentWeapon == WEAPON_SUMMON_STAFF
-                && staff.pickedUp)
-            {
-                UseSummonStaff(staff, summons, pl.pos);
-            }
 
             // ใช้เวทมนตร์
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
@@ -323,40 +268,6 @@
             for (MagicProjectile& m : magicProjectiles)
                 UpdateMagicProjectile(m, dt);
 
-            // ===== Update Summon =====
-            for (Summon& s : summons)
-            {
-                if (!s.active) continue;
-                if (!enemies.empty())
-                    UpdateSummon(s, dt, enemies[0].pos);
-            }
-
-            // ===== Summon โดนศัตรู =====
-            for (Summon& s : summons)
-            {
-                if (!s.active) continue;
-                for (int j = enemies.size() - 1; j >= 0; j--)
-                {
-                    Rectangle enemyRec = {
-                        enemies[j].pos.x, enemies[j].pos.y,
-                        enemies[j].size.x, enemies[j].size.y
-                    };
-
-                    if (CheckCollisionCircleRec(s.pos, s.radius, enemyRec))
-                    {
-                        enemies[j].hp -= s.damage;
-                        s.active = false;
-                        if (enemies[j].hp <= 0)
-                            enemies.erase(enemies.begin() + j);
-                        break;
-                    }
-                }
-            }
-
-            // ลบ summon ที่หมดอายุ
-            for (int i = summons.size() - 1; i >= 0; i--)
-                if (!summons[i].active)
-                    summons.erase(summons.begin() + i);
 
             // ===== ศัตรูโจมตีผู้เล่น =====
             for (Enemy& e : enemies)
@@ -416,9 +327,6 @@
 
             for (const Enemy& e : enemies) DrawEnemy(e);
 
-            // วาดซัมมอน
-            for (const Summon& s : summons) DrawSummon(s);
-
             // วาดอาวุธ
             if (!sword.pickedUp || currentWeapon == WEAPON_SWORD)
                 DrawSword(sword, pl.pos, pl.size, dir);
@@ -426,7 +334,6 @@
             if (!gun.pickedUp || currentWeapon == WEAPON_GUN)
                 DrawGun(gun, pl.pos, pl.size, dir);
 
-            DrawSummonStaff(staff, pl.pos, dir);
 
             // วาด Magic (เพิ่ม)
             DrawMagicWeapon(magic, pl.pos, dir);
