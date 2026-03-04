@@ -277,7 +277,7 @@
             ++it;
         }
             // อัปเดตเวทมนตร์
-            UpdateMagicProjectiles(magicProjectiles, dt);
+            UpdateMagicProjectiles(magicProjectiles, enemies, dt);
 
 
             // ===== ศัตรูโจมตีผู้เล่น =====

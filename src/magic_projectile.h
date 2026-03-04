@@ -1,6 +1,7 @@
 #pragma once
 #include "raylib.h"
 #include <vector>
+#include "enemy.h"
 
 enum MagicType
 {
@@ -30,6 +31,7 @@ void SpawnMagicProjectile(
 
 void UpdateMagicProjectiles(
     std::vector<MagicProjectile>& list,
+    std::vector<Enemy>& enemies,
     float dt
 );
 

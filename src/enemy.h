@@ -17,6 +17,15 @@ struct Enemy
     int atk;
     float attackTimer;
     Color color;
+
+    float burnTimer = 0.0f;
+
+    float slowTimer = 0.0f;
+    float freezeTimer = 0.0f;
+    int iceStack = 0;
+    float slowPower = 1.0f;
+
+    float electrifiedTimer = 0.0f;
 };
 
 // ประกาศฟังก์ชัน

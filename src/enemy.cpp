@@ -6,7 +6,7 @@ void InitEnemy(Enemy& e, Vector2 pos)
     e.pos = pos; // กำหนดจุดเกิดเริ่มต้นของศัตรู
     e.size = { 18, 18 }; // ขนาดของศัตรู
     e.speed = 1.0f; // ความเร็ว
-    e.hpMax = 60; // เลือด
+    e.hpMax = 300; // เลือด
     e.hp = e.hpMax;
     e.atk = 4;
     e.attackTimer = 0.0f;
@@ -21,6 +21,35 @@ void UpdateEnemy(Enemy& e, Vector2 playerPos)
     {
         dir = Vector2Normalize(dir); 
         e.pos = Vector2Add(e.pos, Vector2Scale(dir, e.speed)); // เคลื่อนที่ไปหาผู้เล่น
+    }
+
+    float dt = GetFrameTime();
+    // ===== Burn (Fire DoT) =====
+    if (e.burnTimer > 0)
+    {
+    e.burnTimer -= dt;
+    e.hp -= 10 * dt; // 10 damage/sec
+    }
+
+     // ===== Freeze (หยุดทุกอย่างก่อน) =====
+    if (e.freezeTimer > 0)
+    {
+        e.freezeTimer -= dt;
+        return; // ไม่ขยับเลย
+    }
+
+    // ===== Slow =====
+    float speedModifier = 1.0f;
+
+    if (e.slowTimer > 0)
+    {
+    e.slowTimer -= dt;
+    speedModifier *= 0.6f;
+    }
+    if (e.electrifiedTimer > 0)
+    {
+    e.electrifiedTimer -= dt;
+    speedModifier *= 0.85f; // ช้าลง 15%
     }
 }
 
