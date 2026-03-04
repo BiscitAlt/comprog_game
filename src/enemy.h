@@ -16,6 +16,7 @@ struct Enemy
     int hpMax;
     int atk;
     float attackTimer;
+    int expDrop;        // ⭐ เพิ่ม
     Color color;
 };
 

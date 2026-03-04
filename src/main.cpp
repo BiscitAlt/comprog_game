@@ -16,6 +16,9 @@
     #include "magic_weapon.h"
     #include "magic_projectile.h"
     #include "loot_box.h"
+    #include "exp_orb.h"
+
+    std::vector<ExpOrb> expOrbs;
 
     // ===== ประเภทอาวุธ =====
     enum WeaponType {
@@ -39,8 +42,11 @@
 
         // ===== Player =====
         Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
-        player pl = { plPos, {20, 20}, 2.0f, RED, 100, 100 ,100.0f, 100.0f };
-
+        player pl = { plPos, {20, 20}, 2.0f, RED, 100, 100, 100.0f, 100.0f,
+              1,        // level
+              0,        // exp
+              50        // expToNext
+        };
         // ===== Sword =====
         Sword sword;
         SwordType randomType = (SwordType)GetRandomValue(0, 2);
@@ -138,6 +144,22 @@
                 pl.pos.x, pl.pos.y,
                 pl.size.x, pl.size.y
             };
+            for (ExpOrb& orb : expOrbs)
+            {
+                UpdateExpOrb(orb, playerRec, pl.exp);
+            }
+            if (pl.exp >= pl.expToNext)
+            {
+            pl.level++;
+            pl.exp = 0;
+            pl.expToNext += 20;  // เพิ่มความยาก
+
+             pl.hpMax += 20;
+            pl.manaMax += 15;
+
+            pl.hp = pl.hpMax;        // เติมเต็ม
+            pl.mana = pl.manaMax;
+            }
             
             // ===== loot boox update =====
             lootOpened = false;
@@ -263,13 +285,20 @@
             for (Bullet& b : bullets) UpdateBullet(b);
 
             UpdateSwordWaves(swordWaves, enemies, dt); // คลื่นดาบ
+
             for (auto it = enemies.begin(); it != enemies.end(); )
             {
             if (it->hp <= 0)
+            {
+            ExpOrb orb;
+            SpawnExpOrb(orb, it->pos, it->expDrop);
+            expOrbs.push_back(orb);
+
             it = enemies.erase(it);
+            }
             else
-            ++it;
-        }
+             ++it;
+            }
             // อัปเดตเวทมนตร์
             for (MagicProjectile& m : magicProjectiles)
                 UpdateMagicProjectile(m, dt);
@@ -303,7 +332,7 @@
             BeginDrawing();
             ClearBackground(RAYWHITE);
             BeginMode2D(camera);
-
+            
             gridMap.Draw();
             
             // ===== loot box draw =====
@@ -347,7 +376,9 @@
 
             for (const Bullet& b : bullets) DrawBullet(b);
             DrawSwordWaves(swordWaves);
-
+            for (const ExpOrb& orb : expOrbs)
+           DrawExpOrb(orb);
+    
             EndMode2D();
 
             DrawText(
@@ -359,11 +390,12 @@
             TextFormat("Mana: %.0f / %.0f", pl.mana, pl.manaMax),
             10, 65, 20, BLUE
             );
+            DrawText(TextFormat("Level: %d", pl.level), 10, 90, 20, BLACK);
+            DrawText(TextFormat("EXP: %d / %d", pl.exp, pl.expToNext), 10, 115, 20, DARKGREEN);
 
             cursor(GetMousePosition());
             EndDrawing();
         }
-
-        CloseWindow();
-    return 0;
-}
+            CloseWindow();
+            return 0;
+ }       

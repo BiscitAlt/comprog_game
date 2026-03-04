@@ -16,6 +16,9 @@ struct player
     int hpMax;
     float mana;
     float manaMax;
+    int level;
+    int exp;
+    int expToNext;
 };
 
 void plMovement(Vector2 &plPos, float speed);

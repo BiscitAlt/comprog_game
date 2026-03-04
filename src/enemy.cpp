@@ -11,6 +11,7 @@ void InitEnemy(Enemy& e, Vector2 pos)
     e.atk = 4;
     e.attackTimer = 0.0f;
     e.color = BLUE;
+    e.expDrop = 10;   // ศัตรูตัวนี้ให้ exp 10
 }
 
 void UpdateEnemy(Enemy& e, Vector2 playerPos)
