@@ -20,6 +20,8 @@ void SpawnMagicProjectile(
     m.type = type;
     m.effectTimer = 0.0f;
     m.hitPos = startPos;
+    m.effectType = EFFECT_NONE;
+    m.effectRadius = 0;
 
     list.push_back(m);
 }
@@ -76,26 +78,38 @@ void UpdateMagicProjectiles(
                     e.iceStack++;
                     e.slowTimer = 2.0f;
                     e.slowPower = 0.6f;
-                }    
+
                     // ===== ครบ 3 stack ระเบิด =====
                     if (e.iceStack >= 3)
-                {
+                        {
+                        e.hp -= 100; // ความเสียหายจากระเบิด
                         float explosionRadius = 80.0f;
 
-                        for (auto& other : enemies)
-                        {
-                            float dist = Vector2Distance(e.pos, other.pos);
+                    for (auto& other : enemies)
+        {
+                    float dist = Vector2Distance(e.pos, other.pos);
 
-                            if (dist < explosionRadius)
-                                {
-                                        other.hp -= 300;          // ดาเมจระเบิด
-                                        other.slowTimer = 3.0f;   // สโล 3 วิ
-                                        other.slowPower = 0.2f;   // เหลือ 20% speed (80% slow)
+                    if (dist < explosionRadius)
+            {
+                    other.hp -= 300;
+                    other.slowTimer = 3.0f;
+                    other.slowPower = 0.2f;
+            }
         }
-    }
 
-                e.iceStack = 0;
-                }
+            e.iceStack = 0;
+
+                // 💥 ตั้งค่าเอฟเฟคระเบิด
+                m.effectType = EFFECT_ICE_EXPLODE;
+                m.effectRadius = explosionRadius;
+    }
+                else
+            {
+                // ❄ โดนปกติ
+                m.effectType = EFFECT_HIT;
+                m.effectRadius = 30;
+    }
+}
 
                 // ===== LIGHTNING =====
                 if (m.type == LIGHTNING)
@@ -186,21 +200,66 @@ void DrawMagicProjectiles(
                 );
             }
 
-            // ❄ ICE แตกเป็นวงเย็น
-            if (m.type == ICE)
-            {
-                DrawCircleLinesV(
-                    m.hitPos,
-                    30,
-                    SKYBLUE
-                );
+            // ===== ICE EFFECT =====
+            if (m.type == ICE && m.effectTimer > 0)
+{
+            float totalTime = 0.3f;
+            float progress = 1.0f - (m.effectTimer / totalTime);
 
-                DrawCircleV(
-                    m.hitPos,
-                    15,
-                    Fade(SKYBLUE, 0.4f)
-                );
-            }
+            // ----------------------
+            // ❄ ICE HIT ธรรมดา
+            // ----------------------
+            if (m.effectType == EFFECT_HIT)
+             {
+            float radius = 30;
+
+            // วงขอบ
+            DrawCircleLinesV(
+            m.hitPos,
+            radius,
+            SKYBLUE
+        );
+
+            // แกนกลาง glow
+            DrawCircleV(
+            m.hitPos,
+            radius * 0.5f,
+            Fade(SKYBLUE, 0.4f)
+        );
+    }
+
+            // ----------------------
+            // 💥 ICE EXPLOSION (3 stack)
+            // ----------------------
+        if (m.effectType == EFFECT_ICE_EXPLODE)
+    {
+        float radius = m.effectRadius;
+
+        // วงระเบิดจริง
+        DrawCircleLinesV(
+            m.hitPos,
+            radius,
+            BLUE
+        );
+
+        // วงขยาย animation
+        float animatedRadius = radius * progress;
+
+        DrawCircleV(
+            m.hitPos,
+            animatedRadius,
+            Fade(SKYBLUE, 0.35f)
+        );
+
+        // ===== HITBOX DEBUG =====
+        // เส้นแดงคือรัศมีที่คำนวณ damage จริง
+        DrawCircleLinesV(
+            m.hitPos,
+            radius,
+            RED
+        );
+    }
+}
 
             // ⚡ LIGHTNING แฟลชสายฟ้า
             if (m.type == LIGHTNING)

@@ -10,6 +10,13 @@ enum MagicType
     LIGHTNING
 };
 
+enum MagicEffectType
+{
+    EFFECT_NONE,
+    EFFECT_HIT,        // โดนปกติ
+    EFFECT_ICE_EXPLODE // ระเบิด 3 stack
+};
+
 struct MagicProjectile
 {
     Vector2 pos;
@@ -20,6 +27,8 @@ struct MagicProjectile
     bool active;
     float effectTimer;
     Vector2 hitPos;
+    MagicEffectType effectType;
+    float effectRadius;   // ใช้เก็บรัศมีระเบิด
 
     MagicType type;
 };
