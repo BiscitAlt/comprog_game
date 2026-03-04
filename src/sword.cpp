@@ -25,10 +25,11 @@ void InitSword(Sword& s, Vector2 dropPos, SwordType type)
             s.manaCost = 30;
             break;
 
-        case SWORD_DASH:
-            s.cooldown = 1.2f;
-            s.damage = 50;
-            s.dashPower = 300;
+        case SWORD_LIFESTEAL:
+            s.cooldown = 0.6f;
+            s.damage = 12;              // ดาเมจเบา
+            s.lifeStealPercent = 0.5f;  // ดูด 50% ของดาเมจ
+            s.manaCost = 0;
             break;
     }
 }
@@ -52,32 +53,30 @@ void UpdateSword(Sword& s, Vector2 plPos, Vector2 plSize, Vector2 dir)
 // ================= USE =================
 void UseSword(
     Sword& s,
-    Vector2& playerPos,
+    player& pl,
     Vector2 dir,
     std::vector<SwordWave>& waves,
-    float& playerMana
+    std::vector<Enemy>& enemies
 )
 {
     if (s.timer > 0)
         return;
 
-    // ===== ENERGY MANA CHECK =====
+    // ===== MANA CHECK =====
     if (s.type == SWORD_ENERGY)
     {
-        if (playerMana < s.manaCost)
-            return;
+        if (pl.mana < s.manaCost)
+        return;
 
-        playerMana -= s.manaCost;
+        pl.mana -= s.manaCost;
     }
-
-    // ===== SPIN MANA CHECK =====
-    if (s.type == SWORD_SPIN)
+    else if (s.type == SWORD_SPIN)
     {
-        if (playerMana < s.manaCost)
-            return;
+        if (pl.mana < s.manaCost)
+        return;
 
-        playerMana -= s.manaCost;
-    }
+        pl.mana -= s.manaCost;
+}
 
     s.timer = s.cooldown;
 
@@ -85,7 +84,7 @@ void UseSword(
     if (s.type == SWORD_ENERGY)
     {
         SwordWave w;
-        w.pos = playerPos;
+        w.pos = pl.pos;
         w.dir = dir;
         w.speed = 600;
         w.damage = s.damage;
@@ -102,7 +101,7 @@ void UseSword(
             float angle = (2 * PI / 8) * i;
 
             SwordWave w;
-            w.pos = playerPos;
+            w.pos = pl.pos;
             w.dir = { cosf(angle), sinf(angle) };
             w.speed = 500;
             w.damage = s.damage;
@@ -111,35 +110,72 @@ void UseSword(
             waves.push_back(w);
         }
     }
-
-    // ===== DASH =====
-    else if (s.type == SWORD_DASH)
+    else if (s.type == SWORD_LIFESTEAL)
     {
-        playerPos.x += dir.x * s.dashPower;
-        playerPos.y += dir.y * s.dashPower;
+        float attackRadius = 60.0f;
+        int totalDamage = 0;
 
-        SwordWave w;
-        w.pos = playerPos;
-        w.dir = dir;
-        w.speed = 700;
-        w.damage = s.damage;
-        w.active = true;
+    for (auto& e : enemies)
+    {
+        Rectangle enemyRec = {
+            e.pos.x,
+            e.pos.y,
+            e.size.x,
+            e.size.y
+        };
 
-        waves.push_back(w);
+        if (CheckCollisionCircleRec(pl.pos, attackRadius, enemyRec))
+        {
+            e.hp -= s.damage;
+            totalDamage += s.damage;
+        }
     }
+
+        // ===== ดูดเลือด =====
+        float heal = totalDamage * s.lifeStealPercent;
+        pl.hp = Clamp(pl.hp + heal, 0, pl.hpMax);
+}
 }
 
 // ================= UPDATE WAVES =================
-void UpdateSwordWaves(std::vector<SwordWave>& waves, float dt)
+void UpdateSwordWaves(
+    std::vector<SwordWave>& waves,
+    std::vector<Enemy>& enemies,
+    float dt
+)
 {
     for (auto& w : waves)
     {
         if (!w.active)
             continue;
 
+        // เคลื่อนที่
         w.pos.x += w.dir.x * w.speed * dt;
         w.pos.y += w.dir.y * w.speed * dt;
 
+        float hitRadius = 20.0f;
+
+        for (auto& e : enemies)
+        {
+            Rectangle enemyRec = {
+                e.pos.x,
+                e.pos.y,
+                e.size.x,
+                e.size.y
+            };
+
+            if (CheckCollisionCircleRec(w.pos, hitRadius, enemyRec))
+            {
+                e.hp -= w.damage;
+
+                // wave หายเมื่อโดน
+                w.active = false;
+
+                break;
+            }
+        }
+
+        // กันหลุดจอ
         if (w.pos.x < -100 || w.pos.x > 3000 ||
             w.pos.y < -100 || w.pos.y > 3000)
         {
@@ -159,7 +195,7 @@ void DrawSword(Sword& s, Vector2 plPos, Vector2 plSize, Vector2 dir)
 {
     case SWORD_ENERGY: c = SKYBLUE; break;
     case SWORD_SPIN:   c = ORANGE;  break;
-    case SWORD_DASH:   c = RED;     break;
+    case SWORD_LIFESTEAL:  c = GREEN;     break;
 }
 
         DrawRectangleV(s.pos, { 30, 10 }, c);

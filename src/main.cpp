@@ -1,4 +1,4 @@
-   #include "raylib.h"
+    #include "raylib.h"
     #include "rlgl.h"
     #include "raymath.h"
     #include <vector>
@@ -247,7 +247,7 @@
             && currentWeapon == WEAPON_SWORD
             && sword.pickedUp)
             {
-            UseSword(sword, pl.pos, dir, swordWaves, pl.mana);
+                UseSword(sword, pl, dir, swordWaves, enemies);
             }
 
 
@@ -262,8 +262,14 @@
             // อัปเดตกระสุน
             for (Bullet& b : bullets) UpdateBullet(b);
 
-            UpdateSwordWaves(swordWaves, dt); // คลื่นดาบ
-
+            UpdateSwordWaves(swordWaves, enemies, dt); // คลื่นดาบ
+            for (auto it = enemies.begin(); it != enemies.end(); )
+            {
+            if (it->hp <= 0)
+            it = enemies.erase(it);
+            else
+            ++it;
+        }
             // อัปเดตเวทมนตร์
             for (MagicProjectile& m : magicProjectiles)
                 UpdateMagicProjectile(m, dt);
@@ -334,8 +340,7 @@
             if (!gun.pickedUp || currentWeapon == WEAPON_GUN)
                 DrawGun(gun, pl.pos, pl.size, dir);
 
-
-            // วาด Magic (เพิ่ม)
+            // วาด Magic 
             DrawMagicWeapon(magic, pl.pos, dir);
             for (const MagicProjectile& m : magicProjectiles)
                 DrawMagicProjectile(m);

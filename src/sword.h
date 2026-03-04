@@ -1,6 +1,8 @@
 #ifndef SWORD_H
 #define SWORD_H
 
+#include "player.h"
+#include "enemy.h"
 #include "raylib.h"
 #include <vector>
 
@@ -9,7 +11,7 @@ enum SwordType
 {
     SWORD_ENERGY,
     SWORD_SPIN,
-    SWORD_DASH
+    SWORD_LIFESTEAL
 };
 
 // ================= SWORD WAVE =================
@@ -41,8 +43,8 @@ struct Sword
     // spin
     float spinRadius;
 
-    // dash
-    float dashPower;
+    // ดูดเลือด
+    float lifeStealPercent;
 };
 
 // ================= FUNCTION PROTOTYPES =================
@@ -57,14 +59,15 @@ void UpdateSword(
 
 void UseSword(
     Sword& s,
-    Vector2& playerPos,
+    player& pl,
     Vector2 dir,
     std::vector<SwordWave>& waves,
-    float& playerMana
+    std::vector<Enemy>& enemies
 );
 
 void UpdateSwordWaves(
     std::vector<SwordWave>& waves,
+    std::vector<Enemy>& enemies,
     float dt
 );
 
