@@ -1,4 +1,4 @@
-    #include "raylib.h"
+ #include "raylib.h"
     #include "rlgl.h"
     #include "raymath.h"
     #include <vector>
@@ -15,14 +15,13 @@
     #include "heal_potion.h"
     #include "magic_weapon.h"
     #include "magic_projectile.h"
-    #include "loot_box.h"
-
+ 
     // ===== ประเภทอาวุธ =====
     enum WeaponType {
         WEAPON_NONE,          // มือเปล่า
         WEAPON_SWORD,         // ดาบ
         WEAPON_GUN,           // ปืน
-        WEAPON_MAGIC          // ★ เวทมนตร์ (เพิ่ม)
+        WEAPON_MAGIC          // เวทมนตร์
     };
 
     int main()
@@ -68,13 +67,6 @@
 
         InitMagicWeapon(magic,{ pl.pos.x - 160, pl.pos.y },randomMagic);
         std::vector<MagicProjectile> magicProjectiles;
-
-        // ===== Loot Box =====
-        LootBox lootBox;
-        InitLootBox(lootBox, { pl.pos.x + 200, pl.pos.y });
-
-        LootType lootResult;
-        bool lootOpened = false;
 
         // ===== Weapon state =====
         WeaponType currentWeapon = WEAPON_NONE;
@@ -141,35 +133,6 @@
                 pl.pos.x, pl.pos.y,
                 pl.size.x, pl.size.y
             };
-            
-            // ===== loot boox update =====
-            lootOpened = false;
-            UpdateLootBox(lootBox, playerRec, lootResult, lootOpened);
-
-            if (lootOpened)
-            {
-            switch (lootResult)
-            {
-            case LOOT_HEAL:
-            pl.hp = Clamp(pl.hp + 30, 0, pl.hpMax);
-            break;
-
-            case LOOT_SWORD:
-            sword.pickedUp = true;
-            currentWeapon = WEAPON_SWORD;
-            break;
-
-            case LOOT_GUN:
-            gun.pickedUp = true;
-            currentWeapon = WEAPON_GUN;
-            break;
-
-            case LOOT_MAGIC:
-            magic.pickedUp = true;
-            currentWeapon = WEAPON_MAGIC;
-            break;
-        }
-    }
 
             // ===== Mouse direction =====
             Vector2 mouseWorld = GetScreenToWorld2D(GetMousePosition(), camera);
@@ -311,21 +274,6 @@
 
             gridMap.Draw();
             
-            // ===== loot box draw =====
-            DrawLootBox(lootBox);
-            if (lootBox.active &&
-            CheckCollisionRecs(playerRec, {
-            lootBox.pos.x, lootBox.pos.y,
-            lootBox.size.x, lootBox.size.y
-            } ) )
-            {
-            DrawText("Press E",
-            lootBox.pos.x - 10,
-            lootBox.pos.y - 20,
-            12,
-            BLACK
-            );
-            }
 
             // ===== Heal Potion draw =====
             DrawHealPotion(healPotion);
