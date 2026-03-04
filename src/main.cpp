@@ -1,4 +1,4 @@
- #include "raylib.h"
+    #include "raylib.h"
     #include "rlgl.h"
     #include "raymath.h"
     #include <vector>
@@ -48,7 +48,7 @@
 
         // ===== Gun =====
         Gun gun;
-        GunType type = (GunType)GetRandomValue(0, 2);
+        GunType type = (GunType)GetRandomValue(0, 1);
         InitGun(gun, { pl.pos.x - 120, pl.pos.y }, type);
         std::vector<Bullet> bullets;
 
@@ -229,7 +229,12 @@
             }
 
             // อัปเดตกระสุน
-            for (Bullet& b : bullets) UpdateBullet(b);
+
+            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && currentWeapon == WEAPON_GUN)
+            {
+            ShootGun(gun, bullets, pl.pos, pl.size, dir, pl.mana);
+            }
+            UpdateBullets(bullets, enemies, dt);
 
             UpdateSwordWaves(swordWaves, enemies, dt); // คลื่นดาบ
             for (auto it = enemies.begin(); it != enemies.end(); )

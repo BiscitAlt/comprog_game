@@ -15,19 +15,11 @@ void InitGun(Gun& gun, Vector2 pos, GunType type)
         case GunType::SHOTGUN:
             gun.fireRate = 0.6f;
             gun.bulletSpeed = 500;
-            gun.manaCost = 0;
-            break;
-
-        case GunType::LASER:
-            gun.fireRate = 0;
-            gun.bulletSpeed = 1200;
-            gun.manaCost = 20;
             break;
 
         case GunType::ROCKET:
             gun.fireRate = 1.0f;
             gun.bulletSpeed = 400;
-            gun.manaCost = 0;
             break;
     }
 }
@@ -75,55 +67,35 @@ void ShootGun(Gun& gun,
 
             Vector2 d = { cosf(angle), sinf(angle) };
 
-            bullets.push_back({
-                center,
-                Vector2Scale(d, gun.bulletSpeed),
-                4,
-                true,
-                BulletType::NORMAL,
-                1.5f,
-                0,
-                0
-            });
+            Bullet b;
+            b.pos = center;
+            b.vel = Vector2Scale(d, gun.bulletSpeed);
+            b.radius = 4;
+            b.active = true;
+            b.type = BulletType::NORMAL;
+            b.lifeTime = 1.5f;
+
+            bullets.push_back(b);
         }
 
         gun.fireTimer = gun.fireRate;
     }
 
-    // ===== Laser =====
-    else if (gun.type == GunType::LASER)
-    {
-        if (mana <= 0) return;
-
-        mana -= gun.manaCost * GetFrameTime();
-
-        bullets.push_back({
-            center,
-            Vector2Scale(dir, gun.bulletSpeed),
-            0,
-            true,
-            BulletType::LASER,
-            0.15f,
-            3,          // เด้งได้ 3 ครั้ง
-            300.0f      // ความยาวเส้น
-        });
-    }
 
     // ===== Rocket =====
     else if (gun.type == GunType::ROCKET)
     {
         if (gun.fireTimer > 0) return;
 
-        bullets.push_back({
-            center,
-            Vector2Scale(dir, gun.bulletSpeed),
-            8,
-            true,
-            BulletType::ROCKET,
-            3.0f,
-            0,
-            0
-        });
+        Bullet b;
+        b.pos = center;
+        b.vel = Vector2Scale(dir, gun.bulletSpeed);
+        b.radius = 8;
+        b.active = true;
+        b.type = BulletType::ROCKET;
+        b.lifeTime = 3.0f;
+
+        bullets.push_back(b);
 
         gun.fireTimer = gun.fireRate;
     }

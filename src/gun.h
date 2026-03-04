@@ -6,7 +6,6 @@
 enum class GunType
 {
     SHOTGUN,
-    LASER,
     ROCKET
 };
 
@@ -22,7 +21,6 @@ struct Gun
     float fireTimer;
     float bulletSpeed;
 
-    float manaCost; // ใช้เฉพาะ Laser
 };
 
 void InitGun(Gun& gun, Vector2 pos, GunType type);

@@ -1,10 +1,11 @@
 #pragma once
 #include "raylib.h"
+#include <vector>
+#include "enemy.h"
 
 enum class BulletType
 {
     NORMAL,
-    LASER,
     ROCKET
 };
 
@@ -19,10 +20,11 @@ struct Bullet
 
     float lifeTime;
 
-    // ===== ใช้เฉพาะ Laser =====
-    int bounceLeft;     // จำนวนครั้งที่เด้งได้
-    float length;       // ความยาวเส้นเลเซอร์
 };
 
-void UpdateBullet(Bullet& b);
+void UpdateBullets(
+    std::vector<Bullet>& bullets,
+    std::vector<Enemy>& enemies,
+    float dt
+);
 void DrawBullet(const Bullet& b);

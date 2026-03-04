@@ -1,66 +1,80 @@
 #include "bullet.h"
 #include "raymath.h"
+#include "enemy.h"
+#include <vector>
+#include <algorithm>   // สำหรับ remove_if
 
-void UpdateBullet(Bullet& b)
+void UpdateBullets(
+    std::vector<Bullet>& bullets,
+    std::vector<Enemy>& enemies,
+    float dt
+)
 {
-    if (!b.active) return;
-
-    float dt = GetFrameTime();
-
-    b.pos.x += b.vel.x * dt;
-    b.pos.y += b.vel.y * dt;
-
-    b.lifeTime -= dt;
-    if (b.lifeTime <= 0)
+    for (auto& b : bullets)
     {
-        b.active = false;
-        return;
-    }
+        if (!b.active) continue;
 
-    // ===== เด้งเฉพาะ Laser =====
-    if (b.type == BulletType::LASER)
-    {
-        if ((b.pos.x < 0 || b.pos.x > GetScreenWidth()) && b.bounceLeft > 0)
+        b.pos = Vector2Add(b.pos, Vector2Scale(b.vel, dt));
+
+        for (auto& e : enemies)
         {
-            b.vel.x *= -1;
-            b.bounceLeft--;
+            Rectangle enemyRec = {
+                e.pos.x,
+                e.pos.y,
+                e.size.x,
+                e.size.y
+            };
+
+            if (b.type == BulletType::NORMAL)
+            {
+                if (CheckCollisionCircleRec(b.pos, b.radius, enemyRec))
+                {
+                    e.hp -= 20;
+                    b.active = false;
+                    break;
+                }
+            }
+            else if (b.type == BulletType::ROCKET)
+            {
+                if (CheckCollisionCircleRec(b.pos, b.radius, enemyRec))
+                {
+                    float explosionRadius = 100.0f;
+
+                    for (auto& other : enemies)
+                    {
+                        float dist = Vector2Distance(b.pos, other.pos);
+                        if (dist < explosionRadius)
+                            other.hp -= 60;
+                    }
+
+                    b.active = false;
+                    break;
+                }
+            }
         }
 
-        if ((b.pos.y < 0 || b.pos.y > GetScreenHeight()) && b.bounceLeft > 0)
-        {
-            b.vel.y *= -1;
-            b.bounceLeft--;
-        }
-
-        if (b.bounceLeft <= 0)
-            b.active = false;
-    }
-    else
-    {
-        // ===== กระสุนอื่น ไม่เด้ง =====
         if (b.pos.x < 0 || b.pos.x > GetScreenWidth() ||
             b.pos.y < 0 || b.pos.y > GetScreenHeight())
         {
             b.active = false;
         }
     }
+
+    bullets.erase(
+        std::remove_if(
+            bullets.begin(),
+            bullets.end(),
+            [](Bullet& b){ return !b.active; }
+        ),
+        bullets.end()
+    );
 }
 
 void DrawBullet(const Bullet& b)
 {
     if (!b.active) return;
 
-    if (b.type == BulletType::LASER)
-    {
-        Vector2 dir = Vector2Normalize(b.vel);
-        Vector2 end = {
-            b.pos.x + dir.x * b.length,
-            b.pos.y + dir.y * b.length
-        };
-
-        DrawLineEx(b.pos, end, 3, RED);
-    }
-    else if (b.type == BulletType::ROCKET)
+    if (b.type == BulletType::ROCKET)
     {
         DrawCircleV(b.pos, b.radius, ORANGE);
     }
