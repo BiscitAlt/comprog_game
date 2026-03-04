@@ -45,17 +45,16 @@ struct Sword
 
     // ดูดเลือด
     float lifeStealPercent;
+    float effectTimer = 0.0f;
+    float effectDuration = 0.2f;
+
+    bool effectHitActive;
 };
 
 // ================= FUNCTION PROTOTYPES =================
 void InitSword(Sword& s, Vector2 dropPos, SwordType type);
 
-void UpdateSword(
-    Sword& s,
-    Vector2 plPos,
-    Vector2 plSize,
-    Vector2 dir
-);
+void UpdateSword(Sword& s, Vector2 plPos, Vector2 plSize, Vector2 dir, std::vector<Enemy>& enemies);
 
 void UseSword(
     Sword& s,

@@ -13,6 +13,7 @@ struct Enemy
     Vector2 size;
     float speed;
     int hp;
+    int hpMax;
     int atk;
     float attackTimer;
     Color color;

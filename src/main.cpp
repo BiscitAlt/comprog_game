@@ -180,7 +180,7 @@
             // =========================
 
             // ----- Sword -----
-            UpdateSword(sword, pl.pos, pl.size, dir);
+            UpdateSword(sword, pl.pos, pl.size, dir, enemies);
             if (sword.pickedUp && currentWeapon != WEAPON_SWORD)
             {
                 if (currentWeapon == WEAPON_GUN)

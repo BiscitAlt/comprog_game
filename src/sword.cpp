@@ -9,20 +9,23 @@ void InitSword(Sword& s, Vector2 dropPos, SwordType type)
     s.pickedUp = false;
     s.type = type;
     s.timer = 0;
+    s.effectTimer = 0.0f;
+    s.effectDuration = 0.25f;
+    s.effectHitActive = false;
 
     switch (s.type)
     {
         case SWORD_ENERGY:
             s.cooldown = 0.5f;
             s.damage = 25;
-            s.manaCost = 10;
+            s.manaCost = 3;
             break;
 
         case SWORD_SPIN:
             s.cooldown = 1.0f;
             s.damage = 40;
             s.spinRadius = 80;
-            s.manaCost = 30;
+            s.manaCost = 10;
             break;
 
         case SWORD_LIFESTEAL:
@@ -35,10 +38,42 @@ void InitSword(Sword& s, Vector2 dropPos, SwordType type)
 }
 
 // ================= UPDATE =================
-void UpdateSword(Sword& s, Vector2 plPos, Vector2 plSize, Vector2 dir)
+void UpdateSword(Sword& s,Vector2 plPos,Vector2 plSize,Vector2 dir,std::vector<Enemy>& enemies)
 {
     if (s.timer > 0)
         s.timer -= GetFrameTime();
+
+    if (s.effectTimer > 0)
+        s.effectTimer -= GetFrameTime();
+
+    if (s.type == SWORD_LIFESTEAL && s.effectTimer > 0 && s.effectHitActive)
+    {
+    float progress = 1.0f - (s.effectTimer / s.effectDuration);
+    float radius = 40 + progress * 30;
+
+    Vector2 center = {
+        plPos.x + plSize.x / 2,
+        plPos.y + plSize.y / 2
+    };
+
+    for (auto& e : enemies)
+    {
+        Rectangle enemyRec = {
+            e.pos.x,
+            e.pos.y,
+            e.size.x,
+            e.size.y
+        };
+
+        if (CheckCollisionCircleRec(center, radius, enemyRec))
+        {
+            e.hp -= s.damage;
+        }
+    }
+
+    // กันตีซ้ำ
+    s.effectHitActive = false;
+    }    
 
     if (!s.pickedUp)
     {
@@ -134,6 +169,9 @@ void UseSword(
         // ===== ดูดเลือด =====
         float heal = totalDamage * s.lifeStealPercent;
         pl.hp = Clamp(pl.hp + heal, 0, pl.hpMax);
+
+        s.effectTimer = s.effectDuration;
+        s.effectHitActive = true;
 }
 }
 
@@ -166,7 +204,7 @@ void UpdateSwordWaves(
 
             if (CheckCollisionCircleRec(w.pos, hitRadius, enemyRec))
             {
-                e.hp -= w.damage;
+                e.hp -= w.damage/2;
 
                 // wave หายเมื่อโดน
                 w.active = false;
@@ -199,6 +237,7 @@ void DrawSword(Sword& s, Vector2 plPos, Vector2 plSize, Vector2 dir)
 }
 
         DrawRectangleV(s.pos, { 30, 10 }, c);
+
         return;
     }
 
@@ -208,6 +247,19 @@ void DrawSword(Sword& s, Vector2 plPos, Vector2 plSize, Vector2 dir)
     };
 
     DrawCircleV(center, 5, BLACK);
+
+    // ===== LIFESTEAL EFFECT (ต้องอยู่ตรงนี้) =====
+    if (s.type == SWORD_LIFESTEAL && s.effectTimer > 0)
+    {
+        float progress = 1.0f - (s.effectTimer / s.effectDuration);
+        float radius = 40 + progress * 30;
+
+        Color effectColor = Fade(GREEN, 1.0f - progress);
+
+        DrawCircleLines(center.x, center.y, radius, effectColor);
+        DrawCircleLines(center.x, center.y, radius + 8, effectColor);
+        DrawCircleLines(center.x, center.y, radius + 16, effectColor);
+    }
 }
 
 // ================= DRAW WAVES =================
