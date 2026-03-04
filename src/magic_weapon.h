@@ -3,33 +3,44 @@
 #include <vector>
 #include "magic_projectile.h"
 
+// ===== ประเภทคฑา =====
+enum MagicWeaponType
+{
+    FIRE_STAFF,
+    ICE_WAND,
+    LIGHTNING_ROD
+};
+
 struct MagicWeapon
 {
     Vector2 pos;
+    Vector2 size;
     bool pickedUp;
 
+    MagicWeaponType type;
+
     float cooldown;
-    float timer;
+    float cooldownTimer;
 };
 
-void InitMagicWeapon(MagicWeapon& m, Vector2 pos);
-
-void UpdateMagicWeapon(
+// ===== Function =====
+void InitMagicWeapon(
     MagicWeapon& m,
-    Vector2 plPos,
-    Vector2 plSize,
-    float dt
+    Vector2 pos,
+    MagicWeaponType type
 );
 
-void UseMagicWeapon(
+void UpdateMagicWeapon(MagicWeapon& magic, Vector2 playerPos, Vector2 playerSize, float dt);
+
+void TryShootMagic(
     MagicWeapon& m,
     std::vector<MagicProjectile>& projectiles,
-    Vector2 plPos,
-    Vector2 dir
+    Vector2 playerPos,
+    Vector2 mousePos
 );
 
 void DrawMagicWeapon(
     const MagicWeapon& m,
-    Vector2 plPos,
+    Vector2 playerPos,
     Vector2 dir
 );

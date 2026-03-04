@@ -63,7 +63,10 @@
 
         // ===== Magic  =====
         MagicWeapon magic;
-        InitMagicWeapon(magic, { pl.pos.x - 160, pl.pos.y });
+        MagicWeaponType randomMagic =
+        (MagicWeaponType)GetRandomValue(0, 2);
+
+        InitMagicWeapon(magic,{ pl.pos.x - 160, pl.pos.y },randomMagic);
         std::vector<MagicProjectile> magicProjectiles;
 
         // ===== Loot Box =====
@@ -252,11 +255,14 @@
 
 
             // ใช้เวทมนตร์
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
-                && currentWeapon == WEAPON_MAGIC
-                && magic.pickedUp)
+            if (currentWeapon == WEAPON_MAGIC)
             {
-                UseMagicWeapon(magic, magicProjectiles, pl.pos, dir);
+            TryShootMagic(
+            magic,
+            magicProjectiles,
+            pl.pos,
+            mouseWorld
+            );
             }
 
             // อัปเดตกระสุน
@@ -271,8 +277,7 @@
             ++it;
         }
             // อัปเดตเวทมนตร์
-            for (MagicProjectile& m : magicProjectiles)
-                UpdateMagicProjectile(m, dt);
+            UpdateMagicProjectiles(magicProjectiles, dt);
 
 
             // ===== ศัตรูโจมตีผู้เล่น =====
@@ -342,8 +347,7 @@
 
             // วาด Magic 
             DrawMagicWeapon(magic, pl.pos, dir);
-            for (const MagicProjectile& m : magicProjectiles)
-                DrawMagicProjectile(m);
+            DrawMagicProjectiles(magicProjectiles);
 
             for (const Bullet& b : bullets) DrawBullet(b);
             DrawSwordWaves(swordWaves);

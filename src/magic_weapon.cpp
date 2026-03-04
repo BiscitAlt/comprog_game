@@ -1,63 +1,151 @@
 #include "magic_weapon.h"
 #include "raymath.h"
 
-void InitMagicWeapon(MagicWeapon& m, Vector2 pos)
+// =======================
+// INIT
+// =======================
+void InitMagicWeapon(
+    MagicWeapon& m,
+    Vector2 pos,
+    MagicWeaponType type
+)
 {
     m.pos = pos;
+    m.size = { 24, 24 };
     m.pickedUp = false;
-    m.cooldown = 0.4f;
-    m.timer = 0.0f;
+    m.type = type;
+
+    m.cooldownTimer = 0.0f;
+
+    // ตั้ง cooldown ตามประเภท
+    switch (type)
+    {
+        case FIRE_STAFF:
+            m.cooldown = 0.6f;
+            break;
+
+        case ICE_WAND:
+            m.cooldown = 0.4f;
+            break;
+
+        case LIGHTNING_ROD:
+            m.cooldown = 0.8f;
+            break;
+    }
 }
 
+// =======================
+// UPDATE
+// =======================
 void UpdateMagicWeapon(
     MagicWeapon& m,
-    Vector2 plPos,
-    Vector2 plSize,
+    Vector2 playerPos,
+    Vector2 playerSize,
     float dt
 )
 {
-    if (m.timer > 0) m.timer -= dt;
+    // cooldown timer
+    if (m.cooldownTimer > 0)
+        m.cooldownTimer -= dt;
 
-    Rectangle weaponRec = { m.pos.x, m.pos.y, 20, 40 };
-    Rectangle playerRec = { plPos.x, plPos.y, plSize.x, plSize.y };
-
-    if (!m.pickedUp && CheckCollisionRecs(weaponRec, playerRec))
+    if (!m.pickedUp)
     {
-        m.pickedUp = true;
-    }
+        Rectangle playerRec = {
+            playerPos.x, playerPos.y,
+            playerSize.x, playerSize.y
+        };
 
-    if (m.pickedUp)
-    {
-        m.pos = Vector2Add(plPos, { 10, 10 });
+        Rectangle magicRec = {
+            m.pos.x, m.pos.y,
+            m.size.x, m.size.y
+        };
+
+        if (CheckCollisionRecs(playerRec, magicRec))
+        {
+            m.pickedUp = true;
+        }
     }
 }
 
-void UseMagicWeapon(
+// =======================
+// SHOOT
+// =======================
+void TryShootMagic(
     MagicWeapon& m,
     std::vector<MagicProjectile>& projectiles,
-    Vector2 plPos,
-    Vector2 dir
+    Vector2 playerPos,
+    Vector2 mousePos
 )
 {
-    if (!m.pickedUp || m.timer > 0) return;
+    if (!m.pickedUp) return;
 
-    MagicProjectile p;
-    InitMagicProjectile(
-        p,
-        Vector2Add(plPos, { 10, 10 }),
-        dir
-    );
+    if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && m.cooldownTimer <= 0)
+    {
+        MagicType projectileType = FIRE;
 
-    projectiles.push_back(p);
-    m.timer = m.cooldown;
+        switch (m.type)
+        {
+            case FIRE_STAFF:
+                projectileType = FIRE;
+                break;
+
+            case ICE_WAND:
+                projectileType = ICE;
+                break;
+
+            case LIGHTNING_ROD:
+                projectileType = LIGHTNING;
+                break;
+        }
+
+        SpawnMagicProjectile(
+            projectiles,
+            playerPos,
+            mousePos,
+            projectileType
+        );
+
+        m.cooldownTimer = m.cooldown;
+    }
 }
 
+// =======================
+// DRAW
+// =======================
 void DrawMagicWeapon(
     const MagicWeapon& m,
-    Vector2 plPos,
+    Vector2 playerPos,
     Vector2 dir
 )
 {
-    Vector2 drawPos = m.pickedUp ? plPos : m.pos;
-    DrawRectangleV(drawPos, { 8, 30 }, PURPLE);
+    Color c = PURPLE;
+
+    switch (m.type)
+    {
+        case FIRE_STAFF:
+            c = ORANGE;
+            break;
+        case ICE_WAND:
+            c = SKYBLUE;
+            break;
+        case LIGHTNING_ROD:
+            c = YELLOW;
+            break;
+    }
+
+    if (!m.pickedUp)
+    {
+        // วาดตอนตกพื้น
+        DrawCircleV(m.pos, 10, c);
+    }
+    else
+    {
+        // วาดตอนถือ
+        Vector2 drawPos = Vector2Add(
+            playerPos,
+            Vector2Scale(dir, 18)
+        );
+
+        DrawCircleV(drawPos, 6, c);
+    }
 }

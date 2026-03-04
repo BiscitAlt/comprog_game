@@ -1,30 +1,56 @@
 #include "magic_projectile.h"
 #include "raymath.h"
 
-void InitMagicProjectile(
-    MagicProjectile& p,
+void SpawnMagicProjectile(
+    std::vector<MagicProjectile>& list,
     Vector2 startPos,
-    Vector2 direction
+    Vector2 targetPos,
+    MagicType type
 )
 {
-    p.pos = startPos;
-    p.dir = Vector2Normalize(direction);
-    p.speed = 400.0f;
-    p.radius = 6.0f;
-    p.damage = 20;
-    p.active = true;
+    MagicProjectile m;
+
+    m.pos = startPos;
+    m.dir = Vector2Normalize(Vector2Subtract(targetPos, startPos));
+    m.speed = 400.0f;
+    m.radius = 6;
+    m.damage = 30;
+    m.active = true;
+    m.type = type;
+
+    list.push_back(m);
 }
 
-void UpdateMagicProjectile(MagicProjectile& p, float dt)
+void UpdateMagicProjectiles(
+    std::vector<MagicProjectile>& list,
+    float dt
+)
 {
-    if (!p.active) return;
+    for (auto& m : list)
+    {
+        if (!m.active) continue;
 
-    p.pos.x += p.dir.x * p.speed * dt;
-    p.pos.y += p.dir.y * p.speed * dt;
+        m.pos = Vector2Add(
+            m.pos,
+            Vector2Scale(m.dir, m.speed * dt)
+        );
+    }
 }
 
-void DrawMagicProjectile(const MagicProjectile& p)
+void DrawMagicProjectiles(
+    const std::vector<MagicProjectile>& list
+)
 {
-    if (!p.active) return;
-    DrawCircleV(p.pos, p.radius, BLUE);
+    for (const auto& m : list)
+    {
+        if (!m.active) continue;
+
+        Color c = WHITE;
+
+        if (m.type == FIRE) c = ORANGE;
+        if (m.type == ICE) c = SKYBLUE;
+        if (m.type == LIGHTNING) c = YELLOW;
+
+        DrawCircleV(m.pos, m.radius, c);
+    }
 }

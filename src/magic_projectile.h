@@ -1,5 +1,13 @@
 #pragma once
 #include "raylib.h"
+#include <vector>
+
+enum MagicType
+{
+    FIRE,
+    ICE,
+    LIGHTNING
+};
 
 struct MagicProjectile
 {
@@ -7,15 +15,24 @@ struct MagicProjectile
     Vector2 dir;
     float speed;
     float radius;
-    int damage;
+    float damage;
     bool active;
+
+    MagicType type;
 };
 
-void InitMagicProjectile(
-    MagicProjectile& p,
+void SpawnMagicProjectile(
+    std::vector<MagicProjectile>& list,
     Vector2 startPos,
-    Vector2 direction
+    Vector2 targetPos,
+    MagicType type
 );
 
-void UpdateMagicProjectile(MagicProjectile& p, float dt);
-void DrawMagicProjectile(const MagicProjectile& p);
+void UpdateMagicProjectiles(
+    std::vector<MagicProjectile>& list,
+    float dt
+);
+
+void DrawMagicProjectiles(
+    const std::vector<MagicProjectile>& list
+);
