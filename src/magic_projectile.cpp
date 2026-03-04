@@ -18,6 +18,8 @@ void SpawnMagicProjectile(
     m.damage = 30;
     m.active = true;
     m.type = type;
+    m.effectTimer = 0.0f;
+    m.hitPos = startPos;
 
     list.push_back(m);
 }
@@ -29,7 +31,11 @@ void UpdateMagicProjectiles(
 )
 {
     for (auto& m : list)
+    {   
+        if (m.effectTimer > 0) // ===== ลดเวลาเอฟเฟค =====
     {
+        m.effectTimer -= dt;
+    }   
         if (!m.active) continue;
 
         m.pos = Vector2Add(
@@ -107,7 +113,7 @@ void UpdateMagicProjectiles(
                         damage *= 0.8f; // ลด 20%
 
                         // หาเป้าหมายใกล้สุด
-                        Enemy* next = nullptr;
+                        Enemy* next = nullptr; 
                         float minDist = 99999;
 
                         for (auto& other : enemies)
@@ -131,6 +137,8 @@ void UpdateMagicProjectiles(
                 }
 
                 m.active = false;
+                m.effectTimer = 0.3f;    // ให้เอฟเฟคอยู่ 0.3 วิ
+                m.hitPos = m.pos;        // จำตำแหน่งที่ชน
                 break;
             }
         }
@@ -143,14 +151,74 @@ void DrawMagicProjectiles(
 {
     for (const auto& m : list)
     {
-        if (!m.active) continue;
+        // ===== วาดลูกกระสุน =====
+        if (m.active)
+        {
+            Color c = WHITE;
 
-        Color c = WHITE;
+            if (m.type == FIRE) c = ORANGE;
+            if (m.type == ICE) c = SKYBLUE;
+            if (m.type == LIGHTNING) c = YELLOW;
 
-        if (m.type == FIRE) c = ORANGE;
-        if (m.type == ICE) c = SKYBLUE;
-        if (m.type == LIGHTNING) c = YELLOW;
+            DrawCircleV(m.pos, m.radius, c);
+        }
 
-        DrawCircleV(m.pos, m.radius, c);
+        // ===== วาดเอฟเฟคตอนชน =====
+        if (m.effectTimer > 0)
+        {
+            float progress = 1.0f - (m.effectTimer / 0.3f);
+
+            // 🔥 FIRE ระเบิดขยาย
+            if (m.type == FIRE)
+            {
+                float radius = 20 + progress * 40;
+
+                DrawCircleLinesV(
+                    m.hitPos,
+                    radius,
+                    RED
+                );
+
+                DrawCircleV(
+                    m.hitPos,
+                    radius * 0.5f,
+                    Fade(ORANGE, 0.3f)
+                );
+            }
+
+            // ❄ ICE แตกเป็นวงเย็น
+            if (m.type == ICE)
+            {
+                DrawCircleLinesV(
+                    m.hitPos,
+                    30,
+                    SKYBLUE
+                );
+
+                DrawCircleV(
+                    m.hitPos,
+                    15,
+                    Fade(SKYBLUE, 0.4f)
+                );
+            }
+
+            // ⚡ LIGHTNING แฟลชสายฟ้า
+            if (m.type == LIGHTNING)
+            {
+                DrawLineEx(
+                    Vector2Subtract(m.hitPos, {15,15}),
+                    Vector2Add(m.hitPos, {15,15}),
+                    4,
+                    YELLOW
+                );
+
+                DrawLineEx(
+                    Vector2Add(m.hitPos, {15,-15}),
+                    Vector2Subtract(m.hitPos, {15,-15}),
+                    4,
+                    WHITE
+                );
+            }
+        }
     }
 }

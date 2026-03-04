@@ -18,6 +18,8 @@ struct MagicProjectile
     float radius;
     float damage;
     bool active;
+    float effectTimer;
+    Vector2 hitPos;
 
     MagicType type;
 };
