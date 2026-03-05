@@ -35,6 +35,27 @@ bool DrawMenuButton(Rectangle rect, const char* text, Color baseColor) {
     
     return (isHovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON));
 }
+// รูปแบบเมาส์ในเกม
+void DrawFantasyCursor() {
+    Vector2 mPos = GetMousePosition();
+    float time = GetTime();
+
+    // 1. วาดแสงเรืองๆ รอบเมาส์ (Outer Glow)
+    DrawCircleGradient(mPos.x, mPos.y, 15, Fade(GOLD, 0.3f), BLANK);
+
+    // 2. วาดวงแหวนเวทมนตร์หมุนๆ (Magic Circle)
+    DrawCircleLinesV(mPos, 10 + sinf(time * 2) * 2, GOLD); // ขยับเข้าออกเบาๆ
+    
+    // 3. วาดกากบาทเล็ง (Crosshair)
+    DrawLineEx({ mPos.x - 12, mPos.y }, { mPos.x + 12, mPos.y }, 2, Fade(RAYWHITE, 0.7f));
+    DrawLineEx({ mPos.x, mPos.y - 12 }, { mPos.x, mPos.y + 12 }, 2, Fade(RAYWHITE, 0.7f));
+
+    // 4. วาดจุดแกนกลางที่สว่างที่สุด
+    DrawCircleV(mPos, 3, WHITE);
+    DrawCircleLinesV(mPos, 3, BLACK); // ขอบดำให้ตัดกับพื้นหลัง
+}
+
+
 
 int main() 
 {
@@ -43,7 +64,7 @@ int main()
     const int screenHeight = 720;
     InitWindow(screenWidth, screenHeight, "Hell project");
     SetTargetFPS(60); 
-    ShowCursor(); 
+    HideCursor(); 
 
     // สร้างอ็อบเจกต์ผู้เล่นและกำหนดค่าสถานะเริ่มต้น
     Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
@@ -64,8 +85,7 @@ int main()
 
 
 // พื้นหลัง lobby
-Texture2D lobbygame = LoadTexture("image_1_1772589236218.jpg");
-
+Texture2D lobbygame = LoadTexture("assets\\BG1\\image_1_1772589236218.jpg");
 
 // --- สร้างละอองไฟหน้า lobby ---
 struct fireeffect {
@@ -198,7 +218,6 @@ for (int i = 0; i < 60; i++) { // สร้าง 60 เม็ด
                 }
 
                 if (DrawMenuButton({ 260, 380, 200, 60 }, "EXIT", MAROON)) break;
-                DrawCircleLines(GetMouseX(), GetMouseY(), 10, DARKGRAY); // วาดเป้าเล็งเมาส์
             }
             // การวาดภาพระหว่างการเล่นเกม
             else if (currentState == STATE_PLAYING) 
@@ -230,9 +249,13 @@ for (int i = 0; i < 60; i++) { // สร้าง 60 เม็ด
                 if (DrawMenuButton({ 260, 380, 200, 60 }, "BACK TO MENU", DARKGRAY)) {
                     currentState = STATE_MENU;
                 }
-                DrawCircleLines(GetMouseX(), GetMouseY(), 10, RAYWHITE);
+                
             }
-
+              // เ๙้คว่าเมาส์ทำงานระหว่างเล่นเกมไหม
+              
+            if (currentState != STATE_PLAYING) {
+            DrawFantasyCursor(); 
+        } 
         EndDrawing();
     }
 
