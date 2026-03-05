@@ -8,25 +8,21 @@
 
 struct SkillState
 {
-    // timers
+    // ===== Skill Cooldown =====
     float blackHoleTimer = 0;
     float whiteHoleTimer = 0;
     float timeStopTimer = 0;
-    float bloodAuraTimer = 0;
+    float bloodNovaTimer = 0;
+    float lightningTimer = 0;
+    float shockwaveTimer = 0;
 
-    // stacks
-    float noHitTimer = 0;
-
-    // passive
-    bool mirrorBlade = true;
-    bool execution = true;
-    bool vampiricBlood = true;
-    bool overheatMode = true;
-
-     // effect timer
+    // ===== Effect Timer (สำหรับวาดเอฟเฟกต์) =====
     float blackHoleEffect = 0;
     float whiteHoleEffect = 0;
     float timeStopEffect = 0;
+    float bloodNovaEffect = 0;
+    float lightningEffect = 0;
+    float shockwaveEffect = 0;
 };
 
 void UpdateSkills(

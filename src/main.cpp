@@ -107,12 +107,6 @@
         {
             float dt = GetFrameTime();
 
-            float damageMultiplier = 1.0f;
-
-            if (skills.noHitTimer > 5)
-            {
-                damageMultiplier = 1.5f;
-            }
             // skill 
             UpdateSkills(skills, pl, enemies, dt);
             
@@ -243,10 +237,6 @@
 
             // อัปเดตกระสุน
 
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && currentWeapon == WEAPON_GUN)
-            {
-            ShootGun(gun, bullets, pl.pos, pl.size, dir, pl.mana);
-            }
             UpdateBullets(bullets, enemies, dt);
 
             UpdateSwordWaves(swordWaves, enemies, dt); // คลื่นดาบ
@@ -282,7 +272,6 @@
                     && plInvincibleTimer <= 0)
                 {
                     pl.hp -= e.atk;
-                    skills.noHitTimer = 0;
                     e.attackTimer = 0.5f;
                     plInvincibleTimer = 0.7f;
                     plHitTimer = 0.3f;
@@ -308,8 +297,8 @@
                 || ((int)(plInvincibleTimer * 10) % 2 == 0))
             {
                 DrawRectangleV(pl.pos, pl.size, pl.color);
-                DrawSkillEffects(skills, pl);
             }
+            DrawSkillEffects(skills, pl);
 
             for (const Enemy& e : enemies) DrawEnemy(e);
 
