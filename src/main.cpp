@@ -42,6 +42,27 @@
 
         // skill 
         SkillState skills;
+        // ===== สุ่มสกิลตอนเริ่มเกม =====
+        int randomSkill = GetRandomValue(0,5);
+
+        // ปิดสกิลทั้งหมดก่อน
+        skills.blackHoleTimer = -9999;
+        skills.whiteHoleTimer = -9999;
+        skills.timeStopTimer = -9999;
+        skills.bloodNovaTimer = -9999;
+        skills.lightningTimer = -9999;
+        skills.shockwaveTimer = -9999;
+
+        // เปิดแค่ 1 สกิล
+        switch(randomSkill)
+{
+        case 0: skills.blackHoleTimer = 0; break;
+        case 1: skills.whiteHoleTimer = 0; break;
+        case 2: skills.timeStopTimer = 0; break;
+        case 3: skills.bloodNovaTimer = 0; break;
+        case 4: skills.lightningTimer = 0; break;
+        case 5: skills.shockwaveTimer = 0; break;
+}
 
         // ===== Sword =====
         Sword sword;
