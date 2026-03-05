@@ -4,62 +4,21 @@
 #include <vector>
 #include <string>
 
-// รวมไฟล์ Header ของระบบต่างๆ ที่แยกโมดูลไว้
+// รวมไฟล์ Header ของระบบต่างๆ ที่แยกไว้
 #include "enemy.h"     
 #include "player.h"    
-#include "item.h"      
+#include "item.h"       
 #include "map.h"       
-#include "ui.h"        
+#include "ui.h"         
 #include "database.h"  
 
-// --- ส่วนที่ 1: การจัดการสถานะหน้าจอ (Game State Management) ---
-// ใช้สำหรับแบ่งแยกการทำงานระหว่าง หน้าเมนู, หน้าเล่นเกม และหน้าจบเกม
+// --- ส่วนที่ 1: การจัดการสถานะหน้าจอ ---
 enum GameState { STATE_MENU, STATE_PLAYING, STATE_GAMEOVER };
 GameState currentState = STATE_MENU; 
 
-/**
- * ฟังก์ชันวาดปุ่มกด (UI Button)
- * ใช้สำหรับตรวจจับเมาส์และวาดกราฟิกปุ่มพร้อมข้อความ
- */
-bool DrawMenuButton(Rectangle rect, const char* text, Color baseColor) {
-    Vector2 mousePos = GetMousePosition();
-    bool isHovered = CheckCollisionPointRec(mousePos, rect);
-    Color drawColor = isHovered ? ColorBrightness(baseColor, 0.3f) : baseColor;
-    
-    DrawRectangleRec(rect, drawColor);
-    DrawRectangleLinesEx(rect, 3, isHovered ? GOLD : DARKGRAY);
-    
-    int fontSize = 20;
-    int textWidth = MeasureText(text, fontSize);
-    DrawText(text, rect.x + (rect.width/2 - textWidth/2), rect.y + (rect.height/2 - fontSize/2), fontSize, RAYWHITE);
-    
-    return (isHovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON));
-}
-// รูปแบบเมาส์ในเกม
-void DrawFantasyCursor() {
-    Vector2 mPos = GetMousePosition();
-    float time = GetTime();
-
-    // 1. วาดแสงเรืองๆ รอบเมาส์ (Outer Glow)
-    DrawCircleGradient(mPos.x, mPos.y, 15, Fade(GOLD, 0.3f), BLANK);
-
-    // 2. วาดวงแหวนเวทมนตร์หมุนๆ (Magic Circle)
-    DrawCircleLinesV(mPos, 10 + sinf(time * 2) * 2, GOLD); // ขยับเข้าออกเบาๆ
-    
-    // 3. วาดกากบาทเล็ง (Crosshair)
-    DrawLineEx({ mPos.x - 12, mPos.y }, { mPos.x + 12, mPos.y }, 2, Fade(RAYWHITE, 0.7f));
-    DrawLineEx({ mPos.x, mPos.y - 12 }, { mPos.x, mPos.y + 12 }, 2, Fade(RAYWHITE, 0.7f));
-
-    // 4. วาดจุดแกนกลางที่สว่างที่สุด
-    DrawCircleV(mPos, 3, WHITE);
-    DrawCircleLinesV(mPos, 3, BLACK); // ขอบดำให้ตัดกับพื้นหลัง
-}
-
-
-
 int main() 
 {
-    // --- การตั้งค่าหน้าต่างและตัวแปรเริ่มต้น (INITIALIZATION) ---
+    // --- การตั้งค่าหน้าต่างและตัวแปรเริ่มต้น  ---
     const int screenWidth = 720;
     const int screenHeight = 720;
     InitWindow(screenWidth, screenHeight, "Hell project");
@@ -81,35 +40,24 @@ int main()
     Camera2D camera = { 0 };
     camera.zoom = 1.0f;
     camera.offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
-     
 
+    // พื้นหลัง lobby
+    Texture2D lobbygame = LoadTexture("assets\\BG1\\image_1_1772589236218.jpg");
 
-// พื้นหลัง lobby
-Texture2D lobbygame = LoadTexture("assets\\BG1\\image_1_1772589236218.jpg");
-
-// --- สร้างละอองไฟหน้า lobby ---
-struct fireeffect {
-    Vector2 pos;
-    float speed;
-    float alpha;
-};
-
-std::vector<fireeffect> embers;
-for (int i = 0; i < 60; i++) { // สร้าง 60 เม็ด
-    embers.push_back({
-        {(float)GetRandomValue(0, 720), (float)GetRandomValue(0, 720)}, 
-        (float)GetRandomValue(5, 15) / 10.0f, 
-        (float)GetRandomValue(3, 8) / 10.0f
-    });
-}
-
-
+    // --- สร้างละอองไฟหน้า lobby ---
+    std::vector<fireeffect> embers;
+    for (int i = 0; i < 60; i++) { // สร้าง 60 เม็ด
+        embers.push_back({
+            {(float)GetRandomValue(0, 720), (float)GetRandomValue(0, 720)}, 
+            (float)GetRandomValue(5, 15) / 10.0f, 
+            (float)GetRandomValue(3, 8) / 10.0f
+        });
+    }
 
     // --- 2. ลูปหลักของเกม (MAIN GAME LOOP) ---
     while (!WindowShouldClose()) 
     {
         // --- ส่วนอัปเดตตรรกะเกม (UPDATE LOGIC) ---
-        // ระบบจะทำงานเฉพาะเมื่ออยู่ในสถานะเล่นเกม (STATE_PLAYING) เท่านั้น
         if (currentState == STATE_PLAYING) 
         {
             HideCursor();
@@ -138,12 +86,12 @@ for (int i = 0; i < 60; i++) { // สร้าง 60 เม็ด
             if (IsKeyPressed(KEY_SPACE)) {
                 isAttacking = true;
                 attackAnimTimer = 0.15f;
-                // กำหนดขอบเขตการโจมตี (Attack Hitbox)
+                // กำหนดขอบเขตการโจมตี 
                 Rectangle atkArea = { pl.pos.x - 20, pl.pos.y - 20, pl.size.x + 40, pl.size.y + 40 };
                 for (Enemy& e : enemies) {
                     if (e.hp > 0 && CheckCollisionRecs(atkArea, {e.pos.x, e.pos.y, e.size.x, e.size.y})) {
                         e.hp -= pl.attack;
-                        // ระบบผลักศัตรู (Knockback)
+                        // ระบบผลักศัตรู 
                         Vector2 dir = Vector2Normalize(Vector2Subtract(e.pos, pl.pos));
                         e.pos = Vector2Add(e.pos, Vector2Scale(dir, 15.0f));
                     }
@@ -163,39 +111,19 @@ for (int i = 0; i < 60; i++) { // สร้าง 60 เม็ด
             }
         }
 
-        // --- ส่วนการวาดกราฟิก (DRAWING) ---
+        // --- ส่วนการวาดกราฟิก  ---
         BeginDrawing();
             ClearBackground(BLACK);
 
             // การวาดหน้าจอเมนูหลัก
             if (currentState == STATE_MENU) 
             {
-                   DrawTexturePro(lobbygame, 
-        { 0, 0, (float)lobbygame.width, (float)lobbygame.height }, // ขนาดรูปต้นฉบับ
-        { 0, 0, (float)screenWidth, (float)screenHeight },        // ขนาดที่จะวาดลงจอ
-        { 0, 0 }, 0.0f, WHITE);
+                UpdateAndDrawMenuBackground(lobbygame, embers, screenWidth, screenHeight);
 
-        // แสดงผลเอฟเฟคไทยดิว่ะ
-    float breathing = sinf(GetTime() * 0.5f) * 5.0f; 
-    DrawTexturePro(lobbygame, 
-        { 0, 0, (float)lobbygame.width, (float)lobbygame.height }, 
-        { -breathing, -breathing, 720 + (breathing * 2), 720 + (breathing * 2) }, 
-        { 0, 0 }, 0.0f, WHITE);
-
-    // 2. เอฟเฟกต์ไฟกะพริบ (Torch Flicker) ทำให้สีจอส้มวูบวาบนิดๆ
-    float flicker = sinf(GetTime() * 4.0f) * 0.1f + 0.9f;
-    DrawRectangle(0, 0, 720, 720, Fade(ORANGE, 0.03f * (1.0f - flicker)));
-
-    // 3. วาดละอองไฟ (Embers) ลอยขึ้น
-    for (auto& p : embers) {
-        p.pos.y -= p.speed; // ให้ลอยขึ้นข้างบน
-        p.pos.x += sinf(GetTime() + p.pos.y) * 0.3f; // ส่ายนิดๆ
-        if (p.pos.y < -10) p.pos.y = 730; // ถ้าหลุดจอให้กลับไปเริ่มข้างล่างใหม่
-
-        DrawCircleV(p.pos, 1.5f, Fade(GOLD, p.alpha * flicker)); // วาดจุดไฟสีทองจางๆ
-    }
-
-                DrawText(" we love anutin", 180, 150, 40, GOLD);
+                const char* title = "HELL PROJECT"; 
+                int titleWidth = MeasureText(title, 50);
+                DrawText(title, (screenWidth/2 - titleWidth/2) + 2, 152, 50, Fade(BLACK, 0.5f)); // เงา
+                DrawText(title, screenWidth/2 - titleWidth/2, 150, 50, GOLD);
                 
                 // ปุ่มเริ่มเกม: ทำการรีเซ็ตค่าสถานะและสร้างโลกใหม่ (Reset Logic)
                 if (DrawMenuButton({ 260, 300, 200, 60 }, "START ", DARKPURPLE)) {
@@ -236,8 +164,8 @@ for (int i = 0; i < 60; i++) { // สร้าง 60 เม็ด
                     }
                 EndMode2D();
 
-                // วาด UI HUD (Heads-up Display)
-                PlayerInfo uiData = { (int)pl.hp, pl.maxHp, (float)pl.mp, pl.speed, 1, 100, pl.skillList };
+                // วาด UI HUD 
+                PlayerInfo uiData = { (int)pl.hp, pl.maxHp, 50.0f, 50.0f, pl.speed, 1, 100, pl.skillList };
                 DrawRoguelikeHUD(uiData, GetMousePosition());
             }
             // การวาดหน้าจอ Game Over
@@ -249,13 +177,12 @@ for (int i = 0; i < 60; i++) { // สร้าง 60 เม็ด
                 if (DrawMenuButton({ 260, 380, 200, 60 }, "BACK TO MENU", DARKGRAY)) {
                     currentState = STATE_MENU;
                 }
-                
             }
-              // เ๙้คว่าเมาส์ทำงานระหว่างเล่นเกมไหม
               
+            // เช็คเมาส์ว่าทำงานไหมระหว่างเล่นเกม
             if (currentState != STATE_PLAYING) {
-            DrawFantasyCursor(); 
-        } 
+                DrawFantasyCursor(); 
+            } 
         EndDrawing();
     }
 
