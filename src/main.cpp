@@ -15,7 +15,7 @@
     #include "heal_potion.h"
     #include "magic_weapon.h"
     #include "magic_projectile.h"
- 
+    #include "skill.h"
     // ===== ประเภทอาวุธ =====
     enum WeaponType {
         WEAPON_NONE,          // มือเปล่า
@@ -39,6 +39,9 @@
         // ===== Player =====
         Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
         player pl = { plPos, {20, 20}, 2.0f, RED, 100, 100 ,100.0f, 100.0f };
+
+        // skill 
+        SkillState skills;
 
         // ===== Sword =====
         Sword sword;
@@ -103,6 +106,15 @@
         while (!WindowShouldClose())
         {
             float dt = GetFrameTime();
+
+            float damageMultiplier = 1.0f;
+
+            if (skills.noHitTimer > 5)
+            {
+                damageMultiplier = 1.5f;
+            }
+            // skill 
+            UpdateSkills(skills, pl, enemies, dt);
             
             // ===== Mana regen =====
             pl.mana += 0.5f * dt;   // ฟื้น 0.5/วินาที
@@ -212,8 +224,9 @@
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
             && currentWeapon == WEAPON_SWORD
             && sword.pickedUp)
+            if (GetRandomValue(0,100) < 25)
             {
-                UseSword(sword, pl, dir, swordWaves, enemies);
+            UseSword(sword, pl, dir, swordWaves, enemies);
             }
 
 
@@ -239,11 +252,18 @@
             UpdateSwordWaves(swordWaves, enemies, dt); // คลื่นดาบ
             for (auto it = enemies.begin(); it != enemies.end(); )
             {
-            if (it->hp <= 0)
+                if (it->hp <= 0)
+    {
+            // Vampiric Blood
+            pl.hp += 3;
+            if (pl.hp > pl.hpMax)
+            pl.hp = pl.hpMax;
+
             it = enemies.erase(it);
+    }
             else
             ++it;
-        }
+}
             // อัปเดตเวทมนตร์
             UpdateMagicProjectiles(magicProjectiles, enemies, dt);
 
@@ -262,6 +282,7 @@
                     && plInvincibleTimer <= 0)
                 {
                     pl.hp -= e.atk;
+                    skills.noHitTimer = 0;
                     e.attackTimer = 0.5f;
                     plInvincibleTimer = 0.7f;
                     plHitTimer = 0.3f;
@@ -287,6 +308,7 @@
                 || ((int)(plInvincibleTimer * 10) % 2 == 0))
             {
                 DrawRectangleV(pl.pos, pl.size, pl.color);
+                DrawSkillEffects(skills, pl);
             }
 
             for (const Enemy& e : enemies) DrawEnemy(e);
