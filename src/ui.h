@@ -3,22 +3,32 @@
 
 #include "raylib.h"
 #include "player.h"
+#include <vector>
+#include <string>
 
-// โครงสร้างข้อมูลใหม่ (ใส่แทนที่ void เดิม)
+// --- โครงสร้างข้อมูลสำหรับละอองไฟ ---
+struct fireeffect {
+    Vector2 pos;
+    float speed;
+    float alpha;
+};
+
+// --- โครงสร้างข้อมูล Player สำหรับ HUD ---
 struct PlayerInfo {
     int hp;
     int maxHp;
     float stamina;
+    float mp; 
     float speed;
     int floor;
     int gold;
-    std::vector<Skill> skills; 
-
+    std::vector<Skill> skillList; 
 };
 
-// เปลี่ยนชื่อฟังก์ชันใหม่ให้ครอบคลุม
+// --- ประกาศฟังก์ชัน UI เพื่อให้ main.cpp มองเห็น ---
 void DrawRoguelikeHUD(PlayerInfo player, Vector2 mousePos);
-
-
+bool DrawMenuButton(Rectangle rect, const char* text, Color baseColor);
+void DrawFantasyCursor();
+void UpdateAndDrawMenuBackground(Texture2D lobbygame, std::vector<fireeffect>& embers, int screenWidth, int screenHeight);
 
 #endif
