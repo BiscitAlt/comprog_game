@@ -8,21 +8,39 @@
 
 struct SkillState
 {
-    // ===== Skill Cooldown =====
-    float blackHoleTimer = 0;
-    float whiteHoleTimer = 0;
-    float timeStopTimer = 0;
-    float bloodNovaTimer = 0;
-    float lightningTimer = 0;
-    float shockwaveTimer = 0;
+    //อุกาบาต
+    float voidMeteorTimer = 0;
+    float voidMeteorEffect = 0;
 
-    // ===== Effect Timer (สำหรับวาดเอฟเฟกต์) =====
+
+    // ดาบรอบตัว
+    float phantomBladeAngle = 0;
+    float phantomBladeTimer = 0;
+
+
+    //สายฟ้าชิ่ง
+    float chainLightningTimer = 0;
+    float chainLightningEffect = 0;
+
+
+    // บ่อพิษ
+    float poisonMistTimer = 0;
+    float poisonMistEffect = 0;
+
+    // หลุมดำ
+    float blackHoleTimer = 0;
     float blackHoleEffect = 0;
-    float whiteHoleEffect = 0;
-    float timeStopEffect = 0;
-    float bloodNovaEffect = 0;
-    float lightningEffect = 0;
+
+    // BLOOD AURA
+    float bloodAuraTimer = 0;
+    float bloodAuraEffect = 0;
+
+    // SHOCKWAVE
+    float shockwaveTimer = 0;
     float shockwaveEffect = 0;
+
+    // SHARED EFFECT POSITION 
+    Vector2 effectPos = {0,0};
 };
 
 void UpdateSkills(
@@ -32,6 +50,9 @@ void UpdateSkills(
     float dt
 );
 
-void DrawSkillEffects(SkillState &s, player &pl);
+void DrawSkillEffects(
+    SkillState &s,
+    player &pl
+);
 
 #endif

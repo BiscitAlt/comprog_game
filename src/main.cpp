@@ -40,30 +40,31 @@
         Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
         player pl = { plPos, {20, 20}, 2.0f, RED, 100, 100 ,100.0f, 100.0f };
 
-        // skill 
         SkillState skills;
-        // ===== สุ่มสกิลตอนเริ่มเกม =====
-        int randomSkill = GetRandomValue(0,5);
 
-        // ปิดสกิลทั้งหมดก่อน
+        // ปิดทุกสกิล
+        skills = {};
+        skills.voidMeteorTimer = -9999;
+        skills.phantomBladeTimer = -9999;
+        skills.chainLightningTimer = -9999;
+        skills.poisonMistTimer = -9999;
         skills.blackHoleTimer = -9999;
-        skills.whiteHoleTimer = -9999;
-        skills.timeStopTimer = -9999;
-        skills.bloodNovaTimer = -9999;
-        skills.lightningTimer = -9999;
+        skills.bloodAuraTimer = -9999;
         skills.shockwaveTimer = -9999;
 
-        // เปิดแค่ 1 สกิล
-        switch(randomSkill)
-{
-        case 0: skills.blackHoleTimer = 0; break;
-        case 1: skills.whiteHoleTimer = 0; break;
-        case 2: skills.timeStopTimer = 0; break;
-        case 3: skills.bloodNovaTimer = 0; break;
-        case 4: skills.lightningTimer = 0; break;
-        case 5: skills.shockwaveTimer = 0; break;
-}
+        // สุ่มสกิล
+        int testSkill = GetRandomValue(0,6);
 
+        switch(testSkill)
+        {
+        case 0: skills.voidMeteorTimer = 0; break;
+        case 1: skills.phantomBladeTimer = 0; break;
+        case 2: skills.chainLightningTimer = 0; break;
+        case 3: skills.poisonMistTimer = 0; break;
+        case 4: skills.blackHoleTimer = 0; break;
+        case 5: skills.bloodAuraTimer = 0; break;
+        case 6: skills.shockwaveTimer = 0; break;
+        }
         // ===== Sword =====
         Sword sword;
         SwordType randomType = (SwordType)GetRandomValue(0, 2);
