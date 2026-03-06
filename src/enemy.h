@@ -5,7 +5,8 @@
 #include "raylib.h"
 #include "map.h"
 #include "item.h"
-
+#include <string>
+#include <vector>
 //คร่าวๆ 
 struct Enemy
 {
@@ -18,10 +19,16 @@ struct Enemy
     float attackTimer;
     int expDrop;        // ⭐ เพิ่ม
     Color color;
+    std::string namemonster;
+    int maxHp;
+    int attack;
+    int hp;
 };
 
+
+
 // ประกาศฟังก์ชัน
-void InitEnemy(Enemy& e, Vector2 pos); // ค่าพื้นฐาน
+void InitEnemy(Enemy& e, Vector2 pos ,std::string name, int hp, int atk); // ค่าพื้นฐาน
 void UpdateEnemy(Enemy& e, Vector2 playerPos); 
 void DrawEnemy(const Enemy& e); 
 

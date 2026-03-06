@@ -254,148 +254,96 @@
                 currentWeapon = WEAPON_MAGIC;
             }
 
-            // =========================
-            // Attack
-            // =========================
-
-            // ยิงปืน
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && currentWeapon == WEAPON_GUN)
-            {
-                ShootGun(gun,bullets,pl.pos,pl.size,dir,pl.mana);
+            // จัดการเวลาการแสดงผลอนิเมชั่นโจมตี
+            if (isAttacking) {
+                attackAnimTimer -= GetFrameTime();
+                if (attackAnimTimer <= 0) isAttacking = false;
             }
 
-            // ใช้ดาบ
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
-            && currentWeapon == WEAPON_SWORD
-            && sword.pickedUp)
-            {
-                UseSword(sword, pl, dir, swordWaves, enemies);
+            // ตรวจสอบเงื่อนไขเมื่อผู้เล่นตาย
+            if (pl.hp <= 0) {
+                pl.hp = 0;
+                currentState = STATE_GAMEOVER;
             }
+        }
 
+        // --- ส่วนการวาดกราฟิก  ---
+        BeginDrawing();
+            ClearBackground(BLACK);
 
-            // ใช้เวทมนตร์
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
-                && currentWeapon == WEAPON_MAGIC
-                && magic.pickedUp)
+            // การวาดหน้าจอเมนูหลัก
+            if (currentState == STATE_MENU) 
             {
-                UseMagicWeapon(magic, magicProjectiles, pl.pos, dir);
+                UpdateAndDrawMenuBackground(lobbygame, embers, screenWidth, screenHeight);
+
+                const char* title = "HELL PROJECT"; 
+                int titleWidth = MeasureText(title, 50);
+                DrawText(title, (screenWidth/2 - titleWidth/2) + 2, 152, 50, Fade(BLACK, 0.5f)); // เงา
+                DrawText(title, screenWidth/2 - titleWidth/2, 150, 50, GOLD);
+                
+                // ปุ่มเริ่มเกม: ทำการรีเซ็ตค่าสถานะและสร้างโลกใหม่ (Reset Logic)
+                if (DrawMenuButton({ 260, 300, 200, 60 }, "START ", DARKPURPLE)) {
+                    pl.hp = 100;
+                    pl.pos = { screenWidth / 2.0f, screenHeight / 2.0f };
+                    enemies.clear(); 
+                    
+                    // สุ่มสร้างศัตรูใหม่ตามจำนวนที่กำหนด
+                    int enemyCount = GetRandomValue(3, 6);
+                    for (int i = 0; i < enemyCount; i++) {
+                        Enemy e;
+                        Vector2 spawnPos = { pl.pos.x + (float)GetRandomValue(-200, 200), pl.pos.y + (float)GetRandomValue(-200, 200) };
+                        int randIdx = GetRandomValue(0, (int)db.size() - 1);
+                        InitEnemy(e, spawnPos, db[randIdx].name, db[randIdx].hp, db[randIdx].atk);
+                        e.color = db[randIdx].color;
+                        enemies.push_back(e);
+                    }
+                    gridMap = Map(30, 30, 20, GetRandomValue(10, 50)); // สุ่มสร้างแผนที่ใหม่
+                    currentState = STATE_PLAYING;
+                }
+
+                if (DrawMenuButton({ 260, 380, 200, 60 }, "EXIT", MAROON)) break;
             }
-
-            // อัปเดตกระสุน
-            for (Bullet& b : bullets) UpdateBullet(b);
-
-            UpdateSwordWaves(swordWaves, enemies, dt); // คลื่นดาบ
-
-            for (auto it = enemies.begin(); it != enemies.end(); )
+            // การวาดภาพระหว่างการเล่นเกม
+            else if (currentState == STATE_PLAYING) 
             {
-            if (it->hp <= 0)
-            {
-            ExpOrb orb;
-            SpawnExpOrb(orb, it->pos, it->expDrop);
-            expOrbs.push_back(orb);
+                BeginMode2D(camera);
+                    gridMap.Draw(); // วาดแผนที่
+                    
+                    if (isAttacking) { // วาดเอฟเฟกต์การโจมตี
+                        DrawCircleLines(pl.pos.x + 10, pl.pos.y + 10, 40, Fade(PURPLE, 0.6f));
+                    }
+                    
+                    DrawRectangleV(pl.pos, pl.size, pl.color); // วาดผู้เล่น
+                    
+                    for (const Enemy& e : enemies) { 
+                        if(e.hp > 0) DrawEnemy(e); // วาดศัตรูที่ยังมีชีวิต
+                    }
+                EndMode2D();
 
-            it = enemies.erase(it);
+                // วาด UI HUD 
+                PlayerInfo uiData = { (int)pl.hp, pl.maxHp, 50.0f, 50.0f, pl.speed, 1, 100, pl.skillList };
+                DrawRoguelikeHUD(uiData, GetMousePosition());
             }
-            else
-             ++it;
-            }
-            // อัปเดตเวทมนตร์
-            for (MagicProjectile& m : magicProjectiles)
-                UpdateMagicProjectile(m, dt);
-
-
-            // ===== ศัตรูโจมตีผู้เล่น =====
-            for (Enemy& e : enemies)
+            // การวาดหน้าจอ Game Over
+            else if (currentState == STATE_GAMEOVER) 
             {
-                e.attackTimer -= dt;
-                Rectangle enemyRec = {
-                    e.pos.x, e.pos.y,
-                    e.size.x, e.size.y
-                };
-
-                if (CheckCollisionRecs(playerRec, enemyRec)
-                    && e.attackTimer <= 0
-                    && plInvincibleTimer <= 0)
-                {
-                    pl.hp -= e.atk;
-                    e.attackTimer = 0.5f;
-                    plInvincibleTimer = 0.7f;
-                    plHitTimer = 0.3f;
+                DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, 0.5f));
+                DrawText("  YOU DIE", screenWidth/2 - 140, screenHeight/2 - 50, 45, RAYWHITE);
+                
+                if (DrawMenuButton({ 260, 380, 200, 60 }, "BACK TO MENU", DARKGRAY)) {
+                    currentState = STATE_MENU;
                 }
             }
+              
+            // เช็คเมาส์ว่าทำงานไหมระหว่างเล่นเกม
+            if (currentState != STATE_PLAYING) {
+                DrawFantasyCursor(); 
+            } 
+        EndDrawing();
+    }
 
-            if (pl.hp <= 0) break;
-
-            // =========================
-            // Draw
-            // =========================
-            BeginDrawing();
-            ClearBackground(RAYWHITE);
-            BeginMode2D(camera);
-            
-            gridMap.Draw();
-            
-            // ===== loot box draw =====
-            DrawLootBox(lootBox);
-            if (lootBox.active &&
-            CheckCollisionRecs(playerRec, {
-            lootBox.pos.x, lootBox.pos.y,
-            lootBox.size.x, lootBox.size.y
-            } ) )
-            {
-            DrawText("Press E",
-            lootBox.pos.x - 10,
-            lootBox.pos.y - 20,
-            12,
-            BLACK
-            );
-            }
-
-            // ===== Heal Potion draw =====
-            DrawHealPotion(healPotion);
-
-            if (plInvincibleTimer <= 0
-                || ((int)(plInvincibleTimer * 10) % 2 == 0))
-            {
-                DrawRectangleV(pl.pos, pl.size, pl.color);
-            }
-
-            for (const Enemy& e : enemies) DrawEnemy(e);
-
-            // วาดอาวุธ
-            if (!sword.pickedUp || currentWeapon == WEAPON_SWORD)
-                DrawSword(sword, pl.pos, pl.size, dir);
-
-            if (!gun.pickedUp || currentWeapon == WEAPON_GUN)
-                DrawGun(gun, pl.pos, pl.size, dir);
-
-            // วาด Magic 
-            DrawMagicWeapon(magic, pl.pos, dir);
-            for (const MagicProjectile& m : magicProjectiles)
-                DrawMagicProjectile(m);
-
-            for (const Bullet& b : bullets) DrawBullet(b);
-            DrawSwordWaves(swordWaves);
-            for (const ExpOrb& orb : expOrbs)
-           DrawExpOrb(orb);
-    
-            EndMode2D();
-
-            DrawText(
-                TextFormat("HP: %d / %d", pl.hp, pl.hpMax),
-                10, 40, 20, BLACK
-            );
-
-            DrawText(
-            TextFormat("Mana: %.0f / %.0f", pl.mana, pl.manaMax),
-            10, 65, 20, BLUE
-            );
-            DrawText(TextFormat("Level: %d", pl.level), 10, 90, 20, BLACK);
-            DrawText(TextFormat("EXP: %d / %d", pl.exp, pl.expToNext), 10, 115, 20, DARKGREEN);
-
-            cursor(GetMousePosition());
-            EndDrawing();
-        }
-            CloseWindow();
-            return 0;
- }       
+    // ปิดหน้าต่างและคืนค่าทรัพยากร
+    UnloadTexture(lobbygame);
+    CloseWindow();
+    return 0;
+}

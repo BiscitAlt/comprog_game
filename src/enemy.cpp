@@ -1,7 +1,8 @@
 #include "enemy.h"
 #include "raymath.h"
 
-void InitEnemy(Enemy& e, Vector2 pos)
+
+void InitEnemy(Enemy& e, Vector2 pos,std::string name, int hp, int atk)
 {
     e.pos = pos; // กำหนดจุดเกิดเริ่มต้นของศัตรู
     e.size = { 18, 18 }; // ขนาดของศัตรู
@@ -16,6 +17,7 @@ void InitEnemy(Enemy& e, Vector2 pos)
 
 void UpdateEnemy(Enemy& e, Vector2 playerPos)
 {
+    if (e.hp <= 0) return;
     Vector2 dir = Vector2Subtract(playerPos, e.pos); // 
 
     if (Vector2Length(dir) > 1) 

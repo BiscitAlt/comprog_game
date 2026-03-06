@@ -4,6 +4,15 @@
 #include "raylib.h"
 #include "map.h"
 #include "item.h"
+#include <string>  
+#include <vector>
+
+struct Skill {
+    std::string skillName;
+    int damage;
+    int mpCost;
+};
+
 
 struct player
 {
@@ -20,6 +29,10 @@ struct player
     int exp;
     int expToNext;
 };
+
+
+
+
 
 void plMovement(Vector2 &plPos, float speed);
 void plCollision(Vector2 &plPos, Vector2 plSize, float plSpeed, Map &map);
