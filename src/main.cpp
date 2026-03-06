@@ -48,7 +48,7 @@ int main()
     camera.zoom = 1.0f;
     camera.offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
 
-    Texture2D lobbygame = LoadTexture("src\\assets\\BG1\\image_1_1772589236218.jpg");
+    Texture2D lobbygame = LoadTexture("assets\\BG1\\image_1_1772589236218.jpg");
     std::vector<fireeffect> embers;
     for (int i = 0; i < 60; i++) { 
         embers.push_back({
@@ -159,6 +159,15 @@ int main()
             if (pl.hp <= 0) {
                 pl.hp = 0;
                 currentState = STATE_GAMEOVER;
+            }
+            
+            // เช็คว่าผู้เล่นเหยียบประตูไหม
+            if (gridMap.IsDoor(pl.pos.x, pl.pos.y)) {
+                gridMap.GenerateNewRoom(); // สุ่มห้องใหม่ทันที!
+                
+                // ย้ายตัวผู้เล่นกลับมาตรงกลาง (หรือย้ายไปฝั่งตรงข้ามของประตู)
+                pl.pos.x = screenWidth / 2.0f;
+                pl.pos.y = screenHeight / 2.0f;
             }
         }
 
