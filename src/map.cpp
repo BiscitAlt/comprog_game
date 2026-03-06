@@ -5,10 +5,11 @@ Map::Map() {
 }
 
 void Map::LoadAssets() {
-    tileset = LoadTexture("assets\\tileset.png");
+    tileset = LoadTexture("src\\assets\\tileset.png");
+    
     // ถ้าโหลดไม่สำเร็จ id ของ texture จะเป็น 0
     if (tileset.id == 0) {
-        TraceLog(LOG_ERROR, "FAILED TO LOAD TILESET! Check path: assets/tileset.png");
+        TraceLog(LOG_ERROR, "FAILED TO LOAD TILESET! Check path: src\\assets\\tileset.png");
     } else {
         TraceLog(LOG_INFO, "TILESET LOADED SUCCESSFULLY!");
     }
@@ -61,7 +62,7 @@ void Map::GenerateNewRoom() {
     }
 }
 void Map::Draw() {
-for (int y = 0; y < rows; y++) {
+    for (int y = 0; y < rows; y++) {
         for (int x = 0; x < cols; x++) {
             float posX = x * tileSize;
             float posY = y * tileSize;

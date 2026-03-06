@@ -110,30 +110,29 @@ int main()
             
             // เช็คว่าผู้เล่นเหยียบประตูไหม
             if (gridMap.IsDoor(pl.pos.x, pl.pos.y)) {
-                int dx = 0, dy = 0;
-                float margin = 50.0f; // ระยะขอบสำหรับเช็คทิศทางประตู
+            int dx = 0, dy = 0;
+            float margin = 50.0f; // ระยะขอบสำหรับเช็คทิศทางประตู
 
-                // ตรวจสอบทิศทางที่ผู้เล่นเดินเข้าประตูเพื่อกำหนดพิกัดห้องถัดไป (dx, dy)
-                if (pl.pos.y < margin) { 
-                    dy = -1; // ขึ้นบน
-                    pl.pos.y = (gridMap.rows - 2) * gridMap.tileSize; 
-                } 
-                else if (pl.pos.y > (gridMap.rows * gridMap.tileSize) - margin) { 
-                    dy = 1; // ลงล่าง
-                    pl.pos.y = 1 * gridMap.tileSize; 
-                }
-                else if (pl.pos.x < margin) { 
-                    dx = -1; // ไปซ้าย
-                    pl.pos.x = (gridMap.cols - 2) * gridMap.tileSize; 
-                }
-                else if (pl.pos.x > (gridMap.cols * gridMap.tileSize) - margin) { 
-                    dx = 1; // ไปขวา
-                    pl.pos.x = 1 * gridMap.tileSize; 
-                }
-
-                // ใช้ ChangeRoom เพื่อเซฟห้องเก่าและโหลด/สร้างห้องใหม่ตามพิกัด {dx, dy}
-                gridMap.ChangeRoom(dx, dy);
+            // ตรวจสอบทิศทางที่ผู้เล่นเดินเข้าประตูเพื่อกำหนดพิกัดห้องถัดไป (dx, dy)
+            if (pl.pos.y < margin) { 
+                dy = -1; // ขึ้นบน
+                pl.pos.y = (gridMap.rows - 2) * gridMap.tileSize; 
+            } 
+            else if (pl.pos.y > (gridMap.rows * gridMap.tileSize) - margin) { 
+                dy = 1; // ลงล่าง
+                pl.pos.y = 1 * gridMap.tileSize; 
             }
+            else if (pl.pos.x < margin) { 
+                dx = -1; // ไปซ้าย
+                pl.pos.x = (gridMap.cols - 2) * gridMap.tileSize; 
+            }
+            else if (pl.pos.x > (gridMap.cols * gridMap.tileSize) - margin) { 
+                dx = 1; // ไปขวา
+                pl.pos.x = 1 * gridMap.tileSize; 
+            }
+
+            // ใช้ ChangeRoom เพื่อเซฟห้องเก่าและโหลด/สร้างห้องใหม่ตามพิกัด {dx, dy}
+            gridMap.ChangeRoom(dx, dy);
         }
 
         // --- ส่วนการวาดกราฟิก  ---

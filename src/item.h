@@ -1,13 +1,19 @@
 #ifndef ITEM_H
 #define ITEM_H
 
-// รวม header ไม่ใส่ใน .cpp เพราะจะได้ไม่ต้อง include ซ้ำหลายๆ ที่
 #include "raylib.h"
 
-struct Box {
-    Rectangle rect; // เก็บทั้ง x, y, width, height ในตัวเดียว
+struct Gem {
+    Vector2 pos;
+    int value;
+    bool active;
     Color color;
-    bool isSolid;   // ถ้า true คือเดินทะลุไม่ได้
+};
+
+struct Box {
+    Rectangle rect;
+    Color color;
+    bool isSolid;
 };
 
 #endif

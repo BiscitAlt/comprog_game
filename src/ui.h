@@ -26,7 +26,7 @@ struct PlayerInfo {
 };
 
 // --- ประกาศฟังก์ชัน UI เพื่อให้ main.cpp มองเห็น ---
-void DrawRoguelikeHUD(PlayerInfo player, Vector2 mousePos);
+void DrawRoguelikeHUD(PlayerInfo player);
 bool DrawMenuButton(Rectangle rect, const char* text, Color baseColor);
 void DrawFantasyCursor();
 void UpdateAndDrawMenuBackground(Texture2D lobbygame, std::vector<fireeffect>& embers, int screenWidth, int screenHeight);

@@ -64,7 +64,7 @@ void UpdateAndDrawMenuBackground(Texture2D lobbygame, std::vector<fireeffect>& e
     }
 }
 
-void DrawRoguelikeHUD(PlayerInfo player, Vector2 mousePos) {
+void DrawRoguelikeHUD(PlayerInfo player) {
     // --- ตั้งค่าตำแหน่ง ---
     int x = 25, y = 25;
     int w = 260, h = 30;
@@ -105,16 +105,4 @@ void DrawRoguelikeHUD(PlayerInfo player, Vector2 mousePos) {
     Color txtCol = (hpPct < 0.25f) ? YELLOW : RAYWHITE;
     DrawText(txt.c_str(), x + 10, y + 5, 20, txtCol);
 
-    // 7. เป้าเล็ง Crosshair 
-    DrawCircleLines(mousePos.x, mousePos.y, 10, Fade(RED, 0.5f)); // วงนอก
-    DrawCircle(mousePos.x, mousePos.y, 2, RED); // จุดไข่ปลาตรงกลาง
-    
-    // ขีดเป้าเล็ง 4 ทิศ
-    DrawLineEx({mousePos.x - 15, mousePos.y}, {mousePos.x - 5, mousePos.y}, 2, RED);
-    DrawLineEx({mousePos.x + 15, mousePos.y}, {mousePos.x + 5, mousePos.y}, 2, RED);
-    DrawLineEx({mousePos.x, mousePos.y - 15}, {mousePos.x, mousePos.y - 5}, 2, RED);
-    DrawLineEx({mousePos.x, mousePos.y + 15}, {mousePos.x, mousePos.y + 5}, 2, RED);
-
-    // โชว์พิกัดข้างเป้าเล็งแบบจางๆ
-    DrawText(TextFormat("%i,%i", (int)mousePos.x, (int)mousePos.y), mousePos.x + 15, mousePos.y + 15, 10, Fade(LIME, 0.8f));
 }
