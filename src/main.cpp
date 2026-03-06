@@ -9,8 +9,21 @@
 #include "item.h"
 #include "map.h"
 #include "ui.h"
-#include <string>     
-#include "database.h" 
+#include "database.h"
+
+#include "sword.h"
+#include "gun.h"
+#include "bullet.h"
+#include "magic_weapon.h"
+#include "magic_projectile.h"
+#include "skill.h"
+
+enum WeaponType {
+    WEAPON_NONE,
+    WEAPON_SWORD,
+    WEAPON_GUN,
+    WEAPON_MAGIC
+};
 
 struct PlayerBullet {
     Vector2 pos;
@@ -29,7 +42,29 @@ int main()
     GameState currentState = STATE_MENU; 
 
     Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
-    player pl = { plPos, {22.0f, 22.0f}, 2.4f, 100.0f, RED, "Hero", 50, 50, 10, {}, 100, 100, 1, 0, 10 };
+    player pl ={plPos,{22.0f,22.0f},2.4f,RED,"Hero",50,50,100,100,10,1,0,10,{}};
+
+    SkillState skills = {};
+    skills.voidMeteorTimer = -9999;
+    skills.phantomBladeTimer = -9999;
+    skills.chainLightningTimer = -9999;
+    skills.poisonMistTimer = -9999;
+    skills.blackHoleTimer = -9999;
+    skills.bloodAuraTimer = -9999;
+    skills.shockwaveTimer = -9999;
+
+    int testSkill = GetRandomValue(0,6);
+
+    switch(testSkill)
+    {
+    case 0: skills.voidMeteorTimer = 0; break;
+    case 1: skills.phantomBladeTimer = 0; break;
+    case 2: skills.chainLightningTimer = 0; break;
+    case 3: skills.poisonMistTimer = 0; break;
+    case 4: skills.blackHoleTimer = 0; break;
+    case 5: skills.bloodAuraTimer = 0; break;
+    case 6: skills.shockwaveTimer = 0; break;
+    }
     
     float attackAnimTimer = 0.0f; 
     bool isAttacking = false;     
@@ -40,6 +75,26 @@ int main()
     std::vector<Enemy> enemies;            
     std::vector<Gem> gems;           
     std::vector<PlayerBullet> pBullets;
+
+    // ===== Weapon =====
+    Sword sword;
+    SwordType swordType = (SwordType)GetRandomValue(0,2);
+    InitSword(sword,{pl.pos.x+100,pl.pos.y},swordType);
+    std::vector<SwordWave> swordWaves;
+
+    Gun gun;
+    GunType gunType = (GunType)GetRandomValue(0,1);
+    InitGun(gun,{pl.pos.x-120,pl.pos.y},gunType);
+    std::vector<Bullet> bullets;
+
+    MagicWeapon magic;
+    MagicWeaponType magicType =
+    (MagicWeaponType)GetRandomValue(0,2);
+    InitMagicWeapon(magic,{pl.pos.x-160,pl.pos.y},magicType);
+
+    std::vector<MagicProjectile> magicProjectiles;
+
+    WeaponType currentWeapon = WEAPON_NONE;
     std::vector<MonsterTemplate> db = GetMonsterDb(); // ดึงข้อมูลมอนสเตอร์จากฐานข้อมูล  
     Map gridMap; // สุ่มสร้างแผนที่ใหม่
     gridMap.LoadAssets(); // โหลดทรัพยากรของแผนที่ (เรียกครั้งเดียวตอนเริ่มเกม)
@@ -58,9 +113,11 @@ int main()
         });
     }
 
+    float autoAttackTimer = 0;
     while (!WindowShouldClose()) 
     {
         float dt = GetFrameTime();
+        UpdateSkills(skills, pl, enemies, dt);
 
         if (currentState == STATE_PLAYING) 
         {
@@ -69,6 +126,87 @@ int main()
             if (screenShake > 0) screenShake -= dt;
 
             plUpdate(pl, gridMap);
+            Rectangle playerRec =
+{
+    pl.pos.x,
+    pl.pos.y,
+    pl.size.x,
+    pl.size.y
+};
+
+Vector2 mouseWorld = GetScreenToWorld2D(GetMousePosition(), camera);
+Vector2 diff = Vector2Subtract(mouseWorld, pl.pos);
+
+Vector2 dir =
+(Vector2Length(diff) > 0.01f)
+? Vector2Normalize(diff)
+: (Vector2){1,0};
+
+//
+// ===== Sword =====
+//
+UpdateSword(sword, pl.pos, pl.size, dir, enemies);
+
+if (sword.pickedUp && currentWeapon != WEAPON_SWORD)
+{
+    if (currentWeapon == WEAPON_GUN)
+    {
+        gun.pickedUp = false;
+        gun.pos = Vector2Add(pl.pos,{ -40,0 });
+    }
+
+    if (currentWeapon == WEAPON_MAGIC)
+    {
+        magic.pickedUp = false;
+        magic.pos = Vector2Add(pl.pos,{ 60,0 });
+    }
+
+    currentWeapon = WEAPON_SWORD;
+}
+
+//
+// ===== Gun =====
+//
+UpdateGun(gun, pl.pos, pl.size);
+
+if (gun.pickedUp && currentWeapon != WEAPON_GUN)
+{
+    if (currentWeapon == WEAPON_SWORD)
+    {
+        sword.pickedUp = false;
+        sword.pos = Vector2Add(pl.pos,{ 40,0 });
+    }
+
+    if (currentWeapon == WEAPON_MAGIC)
+    {
+        magic.pickedUp = false;
+        magic.pos = Vector2Add(pl.pos,{ 60,0 });
+    }
+
+    currentWeapon = WEAPON_GUN;
+}
+
+//
+// ===== Magic =====
+//
+UpdateMagicWeapon(magic, pl.pos, pl.size, dt);
+
+if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
+{
+    if (currentWeapon == WEAPON_SWORD)
+    {
+        sword.pickedUp = false;
+        sword.pos = Vector2Add(pl.pos,{ 40,0 });
+    }
+
+    if (currentWeapon == WEAPON_GUN)
+    {
+        gun.pickedUp = false;
+        gun.pos = Vector2Add(pl.pos,{ -40,0 });
+    }
+
+    currentWeapon = WEAPON_MAGIC;
+}
 
             float scale = 0.2f * GetMouseWheelMove();
             camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.125f, 64.0f);
@@ -79,20 +217,45 @@ int main()
             }
             camera.target = finalTarget;
 
-            shootTimer += dt;
-            if (shootTimer >= 0.6f && !enemies.empty()) { 
-                float minDist = 400.0f; 
-                int targetIdx = -1;
-                for (int i = 0; i < enemies.size(); i++) {
-                    float d = Vector2Distance(pl.pos, enemies[i].pos);
-                    if (d < minDist) { minDist = d; targetIdx = i; }
-                }
-                if (targetIdx != -1) {
-                    Vector2 dir = Vector2Normalize(Vector2Subtract(enemies[targetIdx].pos, pl.pos));
-                    pBullets.push_back({ pl.pos, Vector2Scale(dir, 450.0f), true });
-                    shootTimer = 0;
-                }
-            }
+            autoAttackTimer += dt;
+
+            if (autoAttackTimer >= 0.3f && !enemies.empty())
+{
+            float minDist = 9999;
+            int targetIndex = -1;
+
+            for (int i=0;i<enemies.size();i++)
+    {
+            float d = Vector2Distance(pl.pos,enemies[i].pos);
+            if(d<minDist)
+        {
+            minDist=d;
+            targetIndex=i;
+        }
+    }
+
+            if(targetIndex!=-1)
+    {
+            Vector2 targetPos=enemies[targetIndex].pos;
+
+            Vector2 dir=
+            Vector2Normalize(Vector2Subtract(targetPos,pl.pos));
+
+            if(currentWeapon==WEAPON_GUN)
+            ShootGun(gun,bullets,pl.pos,pl.size,dir,pl.mana);
+
+            if(currentWeapon==WEAPON_SWORD)
+            UseSword(sword,pl,dir,swordWaves,enemies);
+
+            if(currentWeapon==WEAPON_MAGIC)
+            TryShootMagic(magic,magicProjectiles,pl.pos,targetPos);
+    }
+
+    autoAttackTimer=0;
+}
+            UpdateBullets(bullets,enemies,dt);
+            UpdateSwordWaves(swordWaves,enemies,dt);
+            UpdateMagicProjectiles(magicProjectiles,enemies,dt);
 
             for (auto& b : pBullets) {
                 b.pos = Vector2Add(b.pos, Vector2Scale(b.vel, dt));
@@ -124,7 +287,6 @@ int main()
                         pl.hp -= enemies[i].atk;
                         plInvincTimer = 0.6f;
                         screenShake = 0.25f; 
-                        if (enemies[i].type == EXPLODER) enemies.erase(enemies.begin() + i);
                     }
                 }
             }
@@ -201,7 +363,7 @@ int main()
                     Enemy e;
                     Vector2 spawnPos = { pl.pos.x + (float)GetRandomValue(-200, 200), pl.pos.y + (float)GetRandomValue(-200, 200) };
                     int randIdx = GetRandomValue(0, (int)db.size() - 1);
-                    InitEnemy(e, spawnPos, db[randIdx].name, db[randIdx].hp, db[randIdx].atk);
+                    InitEnemy(e, spawnPos, (EnemyType)GetRandomValue(0,3));
                     e.color = db[randIdx].color;
                     enemies.push_back(e);
                 }
@@ -214,9 +376,17 @@ int main()
             if (DrawMenuButton({ 260, 380, 200, 60 }, "EXIT", MAROON)) break;
         }
         else if (currentState == STATE_PLAYING) 
-        {
+        {   Vector2 mouseWorld = GetScreenToWorld2D(GetMousePosition(), camera);
+            Vector2 diff = Vector2Subtract(mouseWorld, pl.pos);
+
+            Vector2 dir =
+            (Vector2Length(diff) > 0.01f)
+            ? Vector2Normalize(diff)
+            : (Vector2){1,0};
+            //DrawSkillEffects(skills, pl);
             BeginMode2D(camera);
                 gridMap.Draw(); 
+                DrawSkillEffects(skills, pl);
                 for (const auto& g : gems) DrawCircleV(g.pos, 5, SKYBLUE); 
                 for (const auto& b : pBullets) DrawCircleV(b.pos, 5, YELLOW); 
                 
@@ -227,8 +397,22 @@ int main()
                 if (plInvincTimer <= 0 || (int)(GetTime()*15)%2 == 0) DrawRectangleV(pl.pos, pl.size, pl.color); 
                 
                 for (const Enemy& e : enemies) { 
-                    if(e.hp > 0) DrawEnemy(e); 
+                    if(e.hp > 0) DrawEnemy(e);    
                 }
+
+                // วาดอาวุธ (อยู่นอก loop)
+                DrawSword(sword, pl.pos, pl.size, dir);
+                DrawGun(gun, pl.pos, pl.size, dir);
+                DrawMagicWeapon(magic, pl.pos, dir);
+
+                // projectiles
+                DrawSwordWaves(swordWaves);
+                DrawMagicProjectiles(magicProjectiles);
+
+                for(const Bullet& b : bullets)
+{
+                DrawBullet(b);
+}
             EndMode2D();
 
             PlayerInfo uiData = { (int)pl.hp, pl.hpMax, 50.0f, 50.0f, pl.speed, 1, 100, pl.skillList };

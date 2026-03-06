@@ -1,40 +1,57 @@
 #include "player.h"
+#include "raymath.h"
 
-void plUpdate(player &pl, Map &map) {
-    Vector2 move = { 0, 0 };
-    float currentSpeed = pl.speed;
+// ======================
+// Update Player
+// ======================
+void plUpdate(player &pl, Map &map)
+{
+    plMovement(pl.pos, pl.speed);
 
-   
-    if (IsKeyDown(KEY_LEFT_SHIFT) && pl.stamina > 0) {
-        currentSpeed *= 1.7f;
-        pl.stamina -= 1.5f;
-    } else {
-        if (pl.stamina < 100) pl.stamina += 0.4f;
-    }
+    plCollision(
+        pl.pos,
+        pl.size,
+        pl.speed,
+        map
+    );
+}
 
-    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) move.x += currentSpeed;
-    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) move.x -= currentSpeed;
-    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W)) move.y -= currentSpeed;
-    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) move.y += currentSpeed;
+// ======================
+// Movement
+// ======================
+void plMovement(Vector2 &plPos, float speed)
+{
+    if (IsKeyDown(KEY_W)) plPos.y -= speed;
+    if (IsKeyDown(KEY_S)) plPos.y += speed;
+    if (IsKeyDown(KEY_A)) plPos.x -= speed;
+    if (IsKeyDown(KEY_D)) plPos.x += speed;
+}
 
-    
-    float p = 3.0f; 
+// ======================
+// Collision (ยังไม่ใช้ Map)
+// ======================
+void plCollision(
+    Vector2 &plPos,
+    Vector2 plSize,
+    float plSpeed,
+    Map &map
+)
+{
+    // กันหลุดจอ (แทน collision map)
+    if (plPos.x < 0) plPos.x = 0;
+    if (plPos.y < 0) plPos.y = 0;
 
-    
-    Vector2 nextX = { pl.pos.x + move.x, pl.pos.y };
-    if (!map.IsWall(nextX.x + p, nextX.y + p) && 
-        !map.IsWall(nextX.x + pl.size.x - p, nextX.y + p) &&
-        !map.IsWall(nextX.x + p, nextX.y + pl.size.y - p) &&
-        !map.IsWall(nextX.x + pl.size.x - p, nextX.y + pl.size.y - p)) {
-        pl.pos.x = nextX.x;
-    }
+    if (plPos.x > GetScreenWidth() - plSize.x)
+        plPos.x = GetScreenWidth() - plSize.x;
 
-  
-    Vector2 nextY = { pl.pos.x, pl.pos.y + move.y };
-    if (!map.IsWall(nextY.x + p, nextY.y + p) && 
-        !map.IsWall(nextY.x + pl.size.x - p, nextY.y + p) &&
-        !map.IsWall(nextY.x + p, nextY.y + pl.size.y - p) &&
-        !map.IsWall(nextY.x + pl.size.x - p, nextY.y + pl.size.y - p)) {
-        pl.pos.y = nextY.y;
-    }
+    if (plPos.y > GetScreenHeight() - plSize.y)
+        plPos.y = GetScreenHeight() - plSize.y;
+}
+
+// ======================
+// Draw Player
+// ======================
+void DrawPlayer(player &pl)
+{
+    DrawRectangleV(pl.pos, pl.size, pl.color);
 }
