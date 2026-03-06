@@ -28,6 +28,7 @@ public:
     void UnloadAssets(); // คืน Memory (เรียกตอนปิดเกม)
 
     void GenerateNewRoom(); // สร้างแมพใหม่ (กำแพงรอบนอก + พื้นข้างใน + กล่องสุ่ม)
+    void ChangeRoom(int dx, int dy); // ฟังก์ชันใหม่สำหรับเปลี่ยนห้อง
     bool IsWall(float x, float y); // ฟังก์ชันเช็คว่าตำแหน่ง (x, y) เป็นกำแพงหรือไม่
     void Draw(); // ฟังก์ชันวาดแมพ
 };
