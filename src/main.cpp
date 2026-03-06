@@ -322,15 +322,6 @@ if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
                 pl.hp = 0;
                 currentState = STATE_GAMEOVER;
             }
-            
-            // เช็คว่าผู้เล่นเหยียบประตูไหม
-            if (gridMap.IsDoor(pl.pos.x, pl.pos.y)) {
-                gridMap.GenerateNewRoom(); // สุ่มห้องใหม่ทันที!
-                
-                // ย้ายตัวผู้เล่นกลับมาตรงกลาง (หรือย้ายไปฝั่งตรงข้ามของประตู)
-                pl.pos.x = screenWidth / 2.0f;
-                pl.pos.y = screenHeight / 2.0f;
-            }
         }
 
         BeginDrawing();
