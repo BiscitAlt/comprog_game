@@ -1,10 +1,34 @@
 #ifndef UI_H
 #define UI_H
 
-// รวม header ไม่ใส่ใน .cpp เพราะจะได้ไม่ต้อง include ซ้ำหลายๆ ที่
 #include "raylib.h"
+#include "player.h"
+#include <vector>
+#include <string>
 
-void textKey(float speed);
-void cursor(Vector2 mousePos);
+// --- โครงสร้างข้อมูลสำหรับละอองไฟ ---
+struct fireeffect {
+    Vector2 pos;
+    float speed;
+    float alpha;
+};
+
+// --- โครงสร้างข้อมูล Player สำหรับ HUD ---
+struct PlayerInfo {
+    int hp;
+    int maxHp;
+    float stamina;
+    float mp; 
+    float speed;
+    int floor;
+    int gold;
+    std::vector<Skill> skillList; 
+};
+
+// --- ประกาศฟังก์ชัน UI เพื่อให้ main.cpp มองเห็น ---
+void DrawRoguelikeHUD(PlayerInfo player);
+bool DrawMenuButton(Rectangle rect, const char* text, Color baseColor);
+void DrawFantasyCursor();
+void UpdateAndDrawMenuBackground(Texture2D lobbygame, std::vector<fireeffect>& embers, int screenWidth, int screenHeight);
 
 #endif
