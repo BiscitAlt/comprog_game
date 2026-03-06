@@ -38,7 +38,7 @@ void Map::GenerateNewRoom() {
     // สุ่มเพิ่มสิ่งกีดขวางในแมพ (ไม่เกิน maxObstacles)
     for (int i = 0; i < maxObstacles; i++) {
         int randX = GetRandomValue(2, cols - 2); // ไม่ให้สุ่มไปที่ขอบ
-        int randY = GetRandomValue(2, rows + 5);
+        int randY = GetRandomValue(2, rows);
         data[randY][randX] = 23; // เพิ่มสิ่งกีดขวาง
         data[randY-1][randX] = 24;
         data[randY-2][randX] = 25;
@@ -112,7 +112,7 @@ for (int y = 0; y < rows; y++) {
                 }
                 else if (tileID == 28) { // ประตู
                     crop.y = 0;
-                    crop.x = GetRandomValue(0, 3) * 16; // ใช้ช่องประตูแบบสุ่มจาก 4 แบบที่มีใน tileset
+                    crop.x = 0; // ใช้ช่องประตูแบบสุ่มจาก 4 แบบที่มีใน tileset
                 }
 
                 // วาดภาพโดยขยายจาก 16x16 ให้เต็มช่อง tileSize (32)
