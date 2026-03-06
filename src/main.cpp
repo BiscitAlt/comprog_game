@@ -34,7 +34,9 @@ int main()
     
     std::vector<Enemy> enemies;            // รายการศัตรูในฉาก
     std::vector<MonsterTemplate> db = GetMonsterDb(); // ดึงข้อมูลมอนสเตอร์จากฐานข้อมูล
-    Map gridMap(30, 30, 20, 0);            // อ็อบเจกต์แผนที่
+    
+    Map gridMap; // สุ่มสร้างแผนที่ใหม่
+    gridMap.LoadAssets(); // โหลดทรัพยากรของแผนที่ (เรียกครั้งเดียวตอนเริ่มเกม)
 
     // ตั้งค่ากล้อง 2D สำหรับติดตามตัวละคร
     Camera2D camera = { 0 };
@@ -109,6 +111,15 @@ int main()
                 pl.hp = 0;
                 currentState = STATE_GAMEOVER;
             }
+            
+            // เช็คว่าผู้เล่นเหยียบประตูไหม
+            if (gridMap.IsDoor(pl.pos.x, pl.pos.y)) {
+                gridMap.GenerateNewRoom(); // สุ่มห้องใหม่ทันที!
+                
+                // ย้ายตัวผู้เล่นกลับมาตรงกลาง (หรือย้ายไปฝั่งตรงข้ามของประตู)
+                pl.pos.x = screenWidth / 2.0f;
+                pl.pos.y = screenHeight / 2.0f;
+            }
         }
 
         // --- ส่วนการวาดกราฟิก  ---
@@ -141,7 +152,7 @@ int main()
                         e.color = db[randIdx].color;
                         enemies.push_back(e);
                     }
-                    gridMap = Map(30, 30, 20, GetRandomValue(10, 50)); // สุ่มสร้างแผนที่ใหม่
+                    gridMap.GenerateNewRoom(); // สร้างห้องใหม่ตอนเริ่มเกม
                     currentState = STATE_PLAYING;
                 }
 
@@ -187,6 +198,7 @@ int main()
     }
 
     // ปิดหน้าต่างและคืนค่าทรัพยากร
+    gridMap.UnloadAssets();
     UnloadTexture(lobbygame);
     CloseWindow();
     return 0;
