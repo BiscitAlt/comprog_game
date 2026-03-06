@@ -121,6 +121,7 @@
 
         float plHitTimer = 0.0f;
         float plInvincibleTimer = 0.0f;
+        float autoAttackTimer = 0;
 
         // =========================
         // Game Loop
@@ -229,32 +230,54 @@
             // =========================
             // Attack
             // =========================
+            
+            autoAttackTimer += dt;
 
-            // ยิงปืน
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && currentWeapon == WEAPON_GUN)
-            {
-                ShootGun(gun,bullets,pl.pos,pl.size,dir,pl.mana);
-            }
+    if (autoAttackTimer >= 0.3f && !enemies.empty())
+{
+    float minDist = 9999;
+    int targetIndex = -1;
 
-            // ใช้ดาบ
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
-            && currentWeapon == WEAPON_SWORD
-            && sword.pickedUp)
-            {
+    // หา enemy ใกล้สุด
+    for (int i = 0; i < enemies.size(); i++)
+    {
+        float d = Vector2Distance(pl.pos, enemies[i].pos);
+
+        if (d < minDist)
+        {
+            minDist = d;
+            targetIndex = i;
+        }
+    }
+
+    if (targetIndex != -1)
+    {
+        Vector2 targetPos = enemies[targetIndex].pos;
+
+        Vector2 dir =
+        Vector2Normalize(Vector2Subtract(targetPos, pl.pos));
+
+        // ===== Gun =====
+        if (currentWeapon == WEAPON_GUN)
+        {
+            ShootGun(gun, bullets, pl.pos, pl.size, dir, pl.mana);
+        }
+
+        // ===== Sword =====
+        if (currentWeapon == WEAPON_SWORD && sword.pickedUp)
+        {
             UseSword(sword, pl, dir, swordWaves, enemies);
-            }
+        }
 
+        // ===== Magic =====
+        if (currentWeapon == WEAPON_MAGIC)
+        {
+            TryShootMagic(magic, magicProjectiles, pl.pos, targetPos);
+        }
+    }
 
-            // ใช้เวทมนตร์
-            if (currentWeapon == WEAPON_MAGIC)
-            {
-            TryShootMagic(
-            magic,
-            magicProjectiles,
-            pl.pos,
-            mouseWorld
-            );
-            }
+            autoAttackTimer = 0;
+}
 
             // อัปเดตกระสุน
 

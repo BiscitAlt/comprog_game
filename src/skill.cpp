@@ -107,7 +107,7 @@ void UpdateSkills(
 }
 
     // CHAIN LIGHTNING
-    if(s.chainLightningTimer > 1.0f)
+    if(s.chainLightningTimer > 3.0f)
     {
         lightningPoints.clear();
 

@@ -79,8 +79,8 @@ void TryShootMagic(
 {
     if (!m.pickedUp) return;
 
-    if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && m.cooldownTimer <= 0)
-    {
+    if (m.cooldownTimer <= 0)
+{
         MagicType projectileType = FIRE;
 
         switch (m.type)
