@@ -8,11 +8,9 @@ void Map::LoadAssets() {
     tileset = LoadTexture("assets\\tileset.png");
     
     // ถ้าโหลดไม่สำเร็จ id ของ texture จะเป็น 0
-    if (tileset.id == 0) {
-        TraceLog(LOG_ERROR, "FAILED TO LOAD TILESET! Check path: assets/tileset.png");
-    } else {
-        TraceLog(LOG_INFO, "TILESET LOADED SUCCESSFULLY!");
-    }
+    if (tileset.id == 0) tileset = LoadTexture("src\\assets\\tileset.png");
+    if (tileset.id == 0) TraceLog(LOG_ERROR, "FAILED TO LOAD TILESET! Check path: assets/tileset.png");
+    else TraceLog(LOG_INFO, "TILESET LOADED SUCCESSFULLY!");
 }
 
 void Map::UnloadAssets() {
