@@ -19,55 +19,106 @@ void Map::UnloadAssets() {
 }
 
 void Map::GenerateNewRoom() {
-    // 1. เริ่มต้นแมพใหม่ (กำแพงรอบนอก + พื้นข้างใน)
+    SetRandomSeed(GetTime());
+    // เริ่มต้นแมพใหม่ (กำแพงรอบนอก + พื้นข้างใน)
     for (int y = 0; y < rows; y++) {
         for (int x = 0; x < cols; x++) {
-            if (y == 0 || y == rows - 1 || x == 0 || x == cols - 1) {
-                data[y][x] = 1; // กำแพง
-            } else {
-                data[y][x] = 0; // พื้น
-            }
+            if (y == 0 && x > 0 && x < cols - 1) data[y][x] = GetRandomValue(4, 7); // กำแพง บน
+            else if (x == 0 && y > 0 && y < rows - 1) data[y][x] = GetRandomValue(8, 10); // กำแพง ซ้าย
+            else if (x == cols - 1 && y > 0 && y < rows - 1) data[y][x] = GetRandomValue(11, 13); // กำแพง ขวา
+            else if (y == 0 && x == 0) data[y][x] = 14; // กำแพง บน-ซ้าย
+            else if (y == 0 && x == cols - 1) data[y][x] = 15; // กำแพง บน-ขวา
+            else if (y == rows - 1 && x > 0 && x < cols - 1) data[y][x] = GetRandomValue(16, 19); // กำแพง ล่าง
+            else if(y == rows - 1 && x == 0) data[y][x] = 20; // กำแพง ล่าง-ซ้าย
+            else if(y == rows - 1 && x == cols - 1) data[y][x] = 21; // กำแพง ล่าง-ขวา
+            else data[y][x] = GetRandomValue(0, 3); // พื้น
         }
     }
 
-    // 2. สุ่มเพิ่มกล่องในแมพ (ไม่เกิน maxBoxes กล่อง)
-    SetRandomSeed(GetTime());
-    for (int i = 0; i < maxBoxes; i++) {
+    // สุ่มเพิ่มสิ่งกีดขวางในแมพ (ไม่เกิน maxObstacles)
+    for (int i = 0; i < maxObstacles; i++) {
         int randX = GetRandomValue(2, cols - 2); // ไม่ให้สุ่มไปที่ขอบ
-        int randY = GetRandomValue(2, rows - 2);
-        data[randY][randX] = 1; // เพิ่มกล่องเป็นกำแพง
+        int randY = GetRandomValue(2, rows + 5);
+        data[randY][randX] = 23; // เพิ่มสิ่งกีดขวาง
+        data[randY-1][randX] = 24;
+        data[randY-2][randX] = 25;
+        data[randY-3][randX] = 26;
+        data[randY-4][randX] = 27;
     }
 
-    data[0][cols/2] = 2;          // ประตูบน
-    data[rows-1][cols/2] = 2;     // ประตูล่าง
-    data[rows/2][0] = 2;          // ประตูซ้าย
-    data[rows/2][cols-1] = 2;     // ประตูขวา
+    // สุ่มตำแหน่งประตู แก้ทีหลัง
+    //switch (GetRandomValue(0, 3)) { 
+    //    case 0: data[0][cols/2] = 28; data[0][(cols/2)+1] = 20; data[0][(cols/2)-1] = 21; break;          // ประตูบน
+    //    case 1: data[rows-1][cols/2] = 28; data[rows-1][(cols/2)+1] = 14; data[rows-1][(cols/2)-1] = 15; break;     // ประตูล่าง
+    //    case 2: data[rows/2][0] = 28; data[(rows/2)+1][0] = 15; data[(rows/2)-1][0] = 21; break;          // ประตูซ้าย
+    //    case 3: data[rows/2][cols-1] = 28; data[(rows/2)+1][cols-1] = 14; data[(rows/2)-1][cols-1] = 20; break;     // ประตูขวา
+    //}
+    switch (GetRandomValue(0, 3)) { 
+        case 0: data[0][cols/2] = 28; data[0][(cols/2)+1] = 28; data[0][(cols/2)-1] = 28; break;          // ประตูบน
+        case 1: data[rows-1][cols/2] = 28; data[rows-1][(cols/2)+1] = 28; data[rows-1][(cols/2)-1] = 28; break;     // ประตูล่าง
+        case 2: data[rows/2][0] = 28; data[(rows/2)+1][0] = 28; data[(rows/2)-1][0] = 28; break;          // ประตูซ้าย
+        case 3: data[rows/2][cols-1] = 28; data[(rows/2)+1][cols-1] = 28; data[(rows/2)-1][cols-1] = 28; break;     // ประตูขวา
+    }
 }
 void Map::Draw() {
 for (int y = 0; y < rows; y++) {
         for (int x = 0; x < cols; x++) {
             float posX = x * tileSize;
             float posY = y * tileSize;
-
-            // Rectangle สำหรับ "ตัด" รูปภาพจาก tileset
-            // สมมติว่าภาพแต่ละช่องกว้าง 48x48 pixel
-            Rectangle crop;
-            crop.width = 32;
-            crop.height = 32;
-            crop.y = 0; // สมมติว่าทุกภาพอยู่แถวเดียวกันหมด
-
             int tileID = data[y][x];
-            
-            if (tileID == 0) { // พื้น
-                crop.x = 0; 
-            } else if (tileID == 1) { // กำแพง
-                crop.x = 32; 
-            } else if (tileID == 2) { // ประตู
-                crop.x = 64; 
-            }
 
-            // วาดภาพที่ตัดมา ลงบนหน้าจอ
-            DrawTextureRec(tileset, crop, {posX, posY}, WHITE);
+            // --- ระบบสำรอง: ถ้าโหลดรูปไม่ขึ้น (id == 0) ให้เทสีพื้นแทน จะได้ไม่จอดำ! ---
+            if (tileset.id == 0) {
+                if (tileID == 0) {
+                    DrawRectangle(posX, posY, tileSize, tileSize, DARKGRAY); // พื้น
+                } else if (tileID == 1) {
+                    DrawRectangle(posX, posY, tileSize, tileSize, LIGHTGRAY); // กำแพง
+                } else if (tileID == 4) {
+                    DrawRectangle(posX, posY, tileSize, tileSize, BROWN); // ประตู
+                }
+                DrawRectangleLines(posX, posY, tileSize, tileSize, BLACK); // ตีเส้นตารางให้ดูง่ายขึ้น
+            } else {
+                // Rectangle สำหรับ "ตัด" รูปภาพจาก tileset
+                // สมมติว่าภาพแต่ละช่องกว้าง 16x16 pixel
+                Rectangle crop;
+                crop.width = 16;
+                crop.height = 16;
+                crop.y = 0;
+                
+                if (tileID >= 0 && tileID <= 3) { // พื้น
+                    crop.y = 0;
+                    crop.x = tileID * 16;
+                } else if (tileID >= 4 && tileID <= 7) { // กำแพง บน
+                    crop.y = 16;
+                    crop.x = (tileID - 4) * 16;
+                } else if (tileID >= 8 && tileID <= 10) { // กำแพง ซ้าย
+                    crop.y = 32;
+                    crop.x = (tileID - 8) * 16;
+                } else if (tileID >= 11 && tileID <= 13) { // กำแพง ขวา
+                    crop.y = 48;
+                    crop.x = (tileID - 11) * 16;
+                } else if (tileID >= 14 && tileID <= 15) { // กำแพง บน-ซ้าย, บน-ขวา
+                    crop.y = 64;
+                    crop.x = (tileID - 14) * 16;
+                } else if (tileID >= 16 && tileID <= 19) { // กำแพง ล่าง
+                    crop.y = 80;
+                    crop.x = (tileID - 16) * 16;
+                } else if (tileID >= 20 && tileID <= 21) { // กำแพง ล่าง-ซ้าย, ล่าง-ขวา
+                    crop.y = 96;
+                    crop.x = (tileID - 20) * 16;
+                } else if (tileID >= 23 && tileID <= 27) { // สิ่งกีดขวาง
+                    crop.y = 112;
+                    crop.x = (tileID - 23) * 16;
+                }
+                else if (tileID == 28) { // ประตู
+                    crop.y = 0;
+                    crop.x = GetRandomValue(0, 3) * 16; // ใช้ช่องประตูแบบสุ่มจาก 4 แบบที่มีใน tileset
+                }
+
+                // วาดภาพโดยขยายจาก 16x16 ให้เต็มช่อง tileSize (32)
+                Rectangle dest = {posX, posY, (float)tileSize, (float)tileSize};
+                DrawTexturePro(tileset, crop, dest, {0, 0}, 0.0f, WHITE);
+            }
         }
     }
 }
@@ -80,13 +131,39 @@ bool Map::IsWall(float x, float y) {
     // 2. เช็คกัน Error: ถ้าพิกัดอยู่นอกขอบเขตแมพ ให้ถือว่าเป็นกำแพงไว้ก่อน
     if (row < 0 || row >= rows || col < 0 || col >= cols) return true; 
 
-    // 3. คืนค่าตามข้อมูลใน Array (1 คือกำแพง/จริง, 0 คือพื้น/เท็จ)
-    return data[row][col] == 1;
+    int id = data[row][col];
+    // ถือว่าเป็นกำแพง ถ้า ID เป็นหมวดกำแพง(4-21) หรือสิ่งกีดขวาง(23-27)
+    return (id >= 4 && id <= 21) || (id >= 24 && id <= 27);
 }
 
 bool Map::IsDoor(float x, float y) {
     int col = (int)(x / tileSize);
     int row = (int)(y / tileSize);
     if (row < 0 || row >= rows || col < 0 || col >= cols) return false;
-    return data[row][col] == 2; // เช็คว่าเหยียบ ID 2 ไหม
+    return data[row][col] == 28; // เช็คว่าเหยียบ ID 28 ไหม
+}
+
+void Map::ChangeRoom(int dx, int dy) {
+    // 1. เซฟห้องปัจจุบันก่อนย้าย
+    RoomData current;
+    for(int y=0; y<rows; y++) {
+        for(int x=0; x<cols; x++) current.data[y][x] = data[y][x];
+    }
+    visitedRooms[{currentRoomX, currentRoomY}] = current;
+
+    // 2. ย้ายตำแหน่งพิกัดโลก
+    currentRoomX += dx;
+    currentRoomY += dy;
+
+    // 3. เช็คว่าเคยมาห้องพิกัด {X, Y} นี้หรือยัง?
+    if (visitedRooms.count({currentRoomX, currentRoomY})) {
+        // โหลดห้องเดิมกลับมา
+        RoomData loaded = visitedRooms[{currentRoomX, currentRoomY}];
+        for(int y=0; y<rows; y++) {
+            for(int x=0; x<cols; x++) data[y][x] = loaded.data[y][x];
+        }
+    } else {
+        // เป็นห้องใหม่ -> สุ่มสร้างเลย
+        GenerateNewRoom();
+    }
 }

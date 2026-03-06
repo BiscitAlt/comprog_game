@@ -65,10 +65,6 @@ int main()
             HideCursor();
             // อัปเดตตำแหน่งกล้องตามตัวละคร
             camera.target = (Vector2){ pl.pos.x + 10.0f, pl.pos.y + 10.0f };
-            
-            // ระบบซูมภาพด้วยเมาส์ (Camera Zoom)
-            float scale = 0.2f * GetMouseWheelMove();
-            camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.125f, 64.0f);
 
             // ตรวจสอบการเคลื่อนที่และการชนกำแพงของผู้เล่น
             plCollision(pl.pos, pl.size, pl.speed, gridMap);
@@ -114,11 +110,29 @@ int main()
             
             // เช็คว่าผู้เล่นเหยียบประตูไหม
             if (gridMap.IsDoor(pl.pos.x, pl.pos.y)) {
-                gridMap.GenerateNewRoom(); // สุ่มห้องใหม่ทันที!
-                
-                // ย้ายตัวผู้เล่นกลับมาตรงกลาง (หรือย้ายไปฝั่งตรงข้ามของประตู)
-                pl.pos.x = screenWidth / 2.0f;
-                pl.pos.y = screenHeight / 2.0f;
+                int dx = 0, dy = 0;
+                float margin = 50.0f; // ระยะขอบสำหรับเช็คทิศทางประตู
+
+                // ตรวจสอบทิศทางที่ผู้เล่นเดินเข้าประตูเพื่อกำหนดพิกัดห้องถัดไป (dx, dy)
+                if (pl.pos.y < margin) { 
+                    dy = -1; // ขึ้นบน
+                    pl.pos.y = (gridMap.rows - 2) * gridMap.tileSize; 
+                } 
+                else if (pl.pos.y > (gridMap.rows * gridMap.tileSize) - margin) { 
+                    dy = 1; // ลงล่าง
+                    pl.pos.y = 1 * gridMap.tileSize; 
+                }
+                else if (pl.pos.x < margin) { 
+                    dx = -1; // ไปซ้าย
+                    pl.pos.x = (gridMap.cols - 2) * gridMap.tileSize; 
+                }
+                else if (pl.pos.x > (gridMap.cols * gridMap.tileSize) - margin) { 
+                    dx = 1; // ไปขวา
+                    pl.pos.x = 1 * gridMap.tileSize; 
+                }
+
+                // ใช้ ChangeRoom เพื่อเซฟห้องเก่าและโหลด/สร้างห้องใหม่ตามพิกัด {dx, dy}
+                gridMap.ChangeRoom(dx, dy);
             }
         }
 
@@ -172,7 +186,7 @@ int main()
                     
                     for (const Enemy& e : enemies) { 
                         if(e.hp > 0) DrawEnemy(e); // วาดศัตรูที่ยังมีชีวิต
-                    }
+                    }                    
                 EndMode2D();
 
                 // วาด UI HUD 
