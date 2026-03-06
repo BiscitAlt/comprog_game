@@ -239,7 +239,6 @@
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
             && currentWeapon == WEAPON_SWORD
             && sword.pickedUp)
-            if (GetRandomValue(0,100) < 25)
             {
             UseSword(sword, pl, dir, swordWaves, enemies);
             }
