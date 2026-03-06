@@ -13,6 +13,11 @@ struct Enemy
     Vector2 pos;
     Vector2 size;
     float speed;
+    int hp;
+    int hpMax;
+    int atk;
+    float attackTimer;
+    int expDrop;        // ⭐ เพิ่ม
     Color color;
     std::string namemonster;
     int maxHp;
