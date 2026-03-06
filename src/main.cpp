@@ -2,53 +2,55 @@
 #include "rlgl.h"
 #include "raymath.h"
 #include <vector>
-#include <string>
+#include <algorithm>
 
-// รวมไฟล์ Header ของระบบต่างๆ ที่แยกไว้
-#include "enemy.h"     
-#include "player.h"    
-#include "item.h"       
-#include "map.h"       
-#include "ui.h"         
-#include "database.h"  
+#include "enemy.h"
+#include "player.h"
+#include "item.h"
+#include "map.h"
+#include "ui.h"
+#include <string>     
+#include "database.h" 
 
-// --- ส่วนที่ 1: การจัดการสถานะหน้าจอ ---
-enum GameState { STATE_MENU, STATE_PLAYING, STATE_GAMEOVER };
-GameState currentState = STATE_MENU; 
+struct PlayerBullet {
+    Vector2 pos;
+    Vector2 vel;
+    bool active;
+};
 
 int main() 
 {
-    // --- การตั้งค่าหน้าต่างและตัวแปรเริ่มต้น  ---
     const int screenWidth = 720;
     const int screenHeight = 720;
     InitWindow(screenWidth, screenHeight, "Hell project");
     SetTargetFPS(60); 
-    HideCursor(); 
 
-    // สร้างอ็อบเจกต์ผู้เล่นและกำหนดค่าสถานะเริ่มต้น
+    enum GameState { STATE_MENU, STATE_PLAYING, STATE_GAMEOVER };
+    GameState currentState = STATE_MENU; 
+
     Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
-    player pl = { plPos, {20.0f, 20.0f}, 2.0f, RED, "Hero", 100, 100, 50, 50, 10, {} };
+    player pl = { plPos, {22.0f, 22.0f}, 2.4f, 100.0f, RED, "Hero", 50, 50, 10, {}, 100, 100, 1, 0, 10 };
     
-    float attackAnimTimer = 0.0f; // ตัวนับเวลาสำหรับอนิเมชั่นการโจมตี
-    bool isAttacking = false;     // สถานะเช็คการโจมตี
+    float attackAnimTimer = 0.0f; 
+    bool isAttacking = false;     
+    float plInvincTimer = 0;
+    float shootTimer = 0;
+    float screenShake = 0; 
     
-    std::vector<Enemy> enemies;            // รายการศัตรูในฉาก
-    std::vector<MonsterTemplate> db = GetMonsterDb(); // ดึงข้อมูลมอนสเตอร์จากฐานข้อมูล
-    
+    std::vector<Enemy> enemies;            
+    std::vector<Gem> gems;           
+    std::vector<PlayerBullet> pBullets;
+    std::vector<MonsterTemplate> db = GetMonsterDb(); // ดึงข้อมูลมอนสเตอร์จากฐานข้อมูล  
     Map gridMap; // สุ่มสร้างแผนที่ใหม่
     gridMap.LoadAssets(); // โหลดทรัพยากรของแผนที่ (เรียกครั้งเดียวตอนเริ่มเกม)
 
-    // ตั้งค่ากล้อง 2D สำหรับติดตามตัวละคร
     Camera2D camera = { 0 };
     camera.zoom = 1.0f;
     camera.offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
 
-    // พื้นหลัง lobby
     Texture2D lobbygame = LoadTexture("assets\\BG1\\image_1_1772589236218.jpg");
-
-    // --- สร้างละอองไฟหน้า lobby ---
     std::vector<fireeffect> embers;
-    for (int i = 0; i < 60; i++) { // สร้าง 60 เม็ด
+    for (int i = 0; i < 60; i++) { 
         embers.push_back({
             {(float)GetRandomValue(0, 720), (float)GetRandomValue(0, 720)}, 
             (float)GetRandomValue(5, 15) / 10.0f, 
@@ -56,57 +58,104 @@ int main()
         });
     }
 
-    // --- 2. ลูปหลักของเกม (MAIN GAME LOOP) ---
     while (!WindowShouldClose()) 
     {
-        // --- ส่วนอัปเดตตรรกะเกม (UPDATE LOGIC) ---
+        float dt = GetFrameTime();
+
         if (currentState == STATE_PLAYING) 
         {
             HideCursor();
-            // อัปเดตตำแหน่งกล้องตามตัวละคร
-            camera.target = (Vector2){ pl.pos.x + 10.0f, pl.pos.y + 10.0f };
-            
-            // ระบบซูมภาพด้วยเมาส์ (Camera Zoom)
+            if (plInvincTimer > 0) plInvincTimer -= dt;
+            if (screenShake > 0) screenShake -= dt;
+
+            plUpdate(pl, gridMap);
+
             float scale = 0.2f * GetMouseWheelMove();
             camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.125f, 64.0f);
+            Vector2 finalTarget = { pl.pos.x + 11.0f, pl.pos.y + 11.0f };
+            if (screenShake > 0) {
+                finalTarget.x += GetRandomValue(-6, 6);
+                finalTarget.y += GetRandomValue(-6, 6);
+            }
+            camera.target = finalTarget;
 
-            // ตรวจสอบการเคลื่อนที่และการชนกำแพงของผู้เล่น
-            plCollision(pl.pos, pl.size, pl.speed, gridMap);
+            shootTimer += dt;
+            if (shootTimer >= 0.6f && !enemies.empty()) { 
+                float minDist = 400.0f; 
+                int targetIdx = -1;
+                for (int i = 0; i < enemies.size(); i++) {
+                    float d = Vector2Distance(pl.pos, enemies[i].pos);
+                    if (d < minDist) { minDist = d; targetIdx = i; }
+                }
+                if (targetIdx != -1) {
+                    Vector2 dir = Vector2Normalize(Vector2Subtract(enemies[targetIdx].pos, pl.pos));
+                    pBullets.push_back({ pl.pos, Vector2Scale(dir, 450.0f), true });
+                    shootTimer = 0;
+                }
+            }
 
-            // อัปเดตสถานะและการชนของศัตรูแต่ละตัว
-            for (Enemy& e : enemies) {
-                if (e.hp > 0) {
-                    UpdateEnemy(e, pl.pos);
-                    // ตรวจสอบการชนระหว่างศัตรูกับผู้เล่น เพื่อลดค่า HP
-                    if (CheckCollisionRecs({pl.pos.x, pl.pos.y, pl.size.x, pl.size.y}, {e.pos.x, e.pos.y, e.size.x, e.size.y})) {
-                        pl.hp -= e.attack * GetFrameTime();
+            for (auto& b : pBullets) {
+                b.pos = Vector2Add(b.pos, Vector2Scale(b.vel, dt));
+                for (auto& e : enemies) {
+                    if (CheckCollisionCircleRec(b.pos, 5, {e.pos.x, e.pos.y, e.size.x, e.size.y})) {
+                        e.hp -= 2; b.active = false; 
+                    }
+                }
+            }
+            pBullets.erase(std::remove_if(pBullets.begin(), pBullets.end(), [](PlayerBullet& b){ return !b.active; }), pBullets.end());
+
+            if (enemies.size() < 7) {
+                Enemy ne;
+                Vector2 sp = { pl.pos.x + GetRandomValue(-500, 500), pl.pos.y + GetRandomValue(-500, 500) };
+                if (Vector2Distance(sp, pl.pos) > 200) { InitEnemy(ne, sp, (EnemyType)GetRandomValue(0, 3)); enemies.push_back(ne); }
+            }
+
+            for (int i = enemies.size() - 1; i >= 0; i--) {
+                UpdateEnemy(enemies[i], pl.pos);
+                
+                if (enemies[i].hp <= 0) {
+                    gems.push_back({ enemies[i].pos, 2, true });
+                    enemies.erase(enemies.begin() + i);
+                    continue;
+                }
+
+                if (CheckCollisionRecs({pl.pos.x, pl.pos.y, pl.size.x, pl.size.y}, {enemies[i].pos.x, enemies[i].pos.y, enemies[i].size.x, enemies[i].size.y})) {
+                    if (plInvincTimer <= 0) {
+                        pl.hp -= enemies[i].atk;
+                        plInvincTimer = 0.6f;
+                        screenShake = 0.25f; 
+                        if (enemies[i].type == EXPLODER) enemies.erase(enemies.begin() + i);
                     }
                 }
             }
 
-            // ระบบการโจมตี (Player Attack)
             if (IsKeyPressed(KEY_SPACE)) {
                 isAttacking = true;
                 attackAnimTimer = 0.15f;
-                // กำหนดขอบเขตการโจมตี 
                 Rectangle atkArea = { pl.pos.x - 20, pl.pos.y - 20, pl.size.x + 40, pl.size.y + 40 };
                 for (Enemy& e : enemies) {
                     if (e.hp > 0 && CheckCollisionRecs(atkArea, {e.pos.x, e.pos.y, e.size.x, e.size.y})) {
                         e.hp -= pl.attack;
-                        // ระบบผลักศัตรู 
                         Vector2 dir = Vector2Normalize(Vector2Subtract(e.pos, pl.pos));
                         e.pos = Vector2Add(e.pos, Vector2Scale(dir, 15.0f));
                     }
                 }
             }
-
-            // จัดการเวลาการแสดงผลอนิเมชั่นโจมตี
             if (isAttacking) {
-                attackAnimTimer -= GetFrameTime();
+                attackAnimTimer -= dt;
                 if (attackAnimTimer <= 0) isAttacking = false;
             }
 
-            // ตรวจสอบเงื่อนไขเมื่อผู้เล่นตาย
+            for (int i = gems.size() - 1; i >= 0; i--) {
+                float d = Vector2Distance(pl.pos, gems[i].pos);
+                if (d < 80.0f) gems[i].pos = Vector2MoveTowards(gems[i].pos, pl.pos, 4.0f); 
+                if (d < 15.0f) {
+                    pl.exp += gems[i].value;
+                    gems.erase(gems.begin() + i);
+                    if (pl.exp >= pl.expNext) { pl.level++; pl.exp = 0; pl.expNext += 10; pl.hp = pl.hpMax; }
+                }
+            }
+
             if (pl.hp <= 0) {
                 pl.hp = 0;
                 currentState = STATE_GAMEOVER;
@@ -122,78 +171,84 @@ int main()
             }
         }
 
-        // --- ส่วนการวาดกราฟิก  ---
         BeginDrawing();
-            ClearBackground(BLACK);
+        ClearBackground(BLACK);
 
-            // การวาดหน้าจอเมนูหลัก
-            if (currentState == STATE_MENU) 
-            {
-                UpdateAndDrawMenuBackground(lobbygame, embers, screenWidth, screenHeight);
+        if (currentState == STATE_MENU) 
+        {
+            ShowCursor();
+            UpdateAndDrawMenuBackground(lobbygame, embers, screenWidth, screenHeight);
 
-                const char* title = "HELL PROJECT"; 
-                int titleWidth = MeasureText(title, 50);
-                DrawText(title, (screenWidth/2 - titleWidth/2) + 2, 152, 50, Fade(BLACK, 0.5f)); // เงา
-                DrawText(title, screenWidth/2 - titleWidth/2, 150, 50, GOLD);
+            const char* title = "HELL PROJECT"; 
+            int titleWidth = MeasureText(title, 50);
+            DrawText(title, (screenWidth/2 - titleWidth/2) + 2, 152, 50, Fade(BLACK, 0.5f)); 
+            DrawText(title, screenWidth/2 - titleWidth/2, 150, 50, GOLD);
+            
+            if (DrawMenuButton({ 260, 300, 200, 60 }, "START ", DARKPURPLE)) {
+                // 1. รีเซ็ตผู้เล่น
+                pl.hp = pl.hpMax;
+                pl.level = 1; pl.exp = 0; pl.expNext = 10;
+                pl.pos = { (gridMap.cols * gridMap.tileSize) / 2.0f, (gridMap.rows * gridMap.tileSize) / 2.0f };
                 
-                // ปุ่มเริ่มเกม: ทำการรีเซ็ตค่าสถานะและสร้างโลกใหม่ (Reset Logic)
-                if (DrawMenuButton({ 260, 300, 200, 60 }, "START ", DARKPURPLE)) {
-                    pl.hp = 100;
-                    pl.pos = { screenWidth / 2.0f, screenHeight / 2.0f };
-                    enemies.clear(); 
-                    
-                    // สุ่มสร้างศัตรูใหม่ตามจำนวนที่กำหนด
-                    int enemyCount = GetRandomValue(3, 6);
-                    for (int i = 0; i < enemyCount; i++) {
-                        Enemy e;
-                        Vector2 spawnPos = { pl.pos.x + (float)GetRandomValue(-200, 200), pl.pos.y + (float)GetRandomValue(-200, 200) };
-                        int randIdx = GetRandomValue(0, (int)db.size() - 1);
-                        InitEnemy(e, spawnPos, db[randIdx].name, db[randIdx].hp, db[randIdx].atk);
-                        e.color = db[randIdx].color;
-                        enemies.push_back(e);
-                    }
-                    gridMap.GenerateNewRoom(); // สร้างห้องใหม่ตอนเริ่มเกม
-                    currentState = STATE_PLAYING;
-                }
-
-                if (DrawMenuButton({ 260, 380, 200, 60 }, "EXIT", MAROON)) break;
-            }
-            // การวาดภาพระหว่างการเล่นเกม
-            else if (currentState == STATE_PLAYING) 
-            {
-                BeginMode2D(camera);
-                    gridMap.Draw(); // วาดแผนที่
-                    
-                    if (isAttacking) { // วาดเอฟเฟกต์การโจมตี
-                        DrawCircleLines(pl.pos.x + 10, pl.pos.y + 10, 40, Fade(PURPLE, 0.6f));
-                    }
-                    
-                    DrawRectangleV(pl.pos, pl.size, pl.color); // วาดผู้เล่น
-                    
-                    for (const Enemy& e : enemies) { 
-                        if(e.hp > 0) DrawEnemy(e); // วาดศัตรูที่ยังมีชีวิต
-                    }
-                EndMode2D();
-
-                // วาด UI HUD 
-                PlayerInfo uiData = { (int)pl.hp, pl.maxHp, 50.0f, 50.0f, pl.speed, 1, 100, pl.skillList };
-                DrawRoguelikeHUD(uiData, GetMousePosition());
-            }
-            // การวาดหน้าจอ Game Over
-            else if (currentState == STATE_GAMEOVER) 
-            {
-                DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, 0.5f));
-                DrawText("  YOU DIE", screenWidth/2 - 140, screenHeight/2 - 50, 45, RAYWHITE);
+                // 2. เคลียร์ของเก่า
+                enemies.clear(); 
+                gems.clear();
+                pBullets.clear();
                 
-                if (DrawMenuButton({ 260, 380, 200, 60 }, "BACK TO MENU", DARKGRAY)) {
-                    currentState = STATE_MENU;
+                // 3. สุ่มมอนสเตอร์ใหม่
+                int enemyCount = GetRandomValue(3, 6);
+                for (int i = 0; i < enemyCount; i++) {
+                    Enemy e;
+                    Vector2 spawnPos = { pl.pos.x + (float)GetRandomValue(-200, 200), pl.pos.y + (float)GetRandomValue(-200, 200) };
+                    int randIdx = GetRandomValue(0, (int)db.size() - 1);
+                    InitEnemy(e, spawnPos, db[randIdx].name, db[randIdx].hp, db[randIdx].atk);
+                    e.color = db[randIdx].color;
+                    enemies.push_back(e);
                 }
+                
+                // 4. สุ่มห้องใหม่และเข้าเกม!
+                gridMap.GenerateNewRoom(); 
+                currentState = STATE_PLAYING;
             }
-              
-            // เช็คเมาส์ว่าทำงานไหมระหว่างเล่นเกม
-            if (currentState != STATE_PLAYING) {
-                DrawFantasyCursor(); 
-            } 
+
+            if (DrawMenuButton({ 260, 380, 200, 60 }, "EXIT", MAROON)) break;
+        }
+        else if (currentState == STATE_PLAYING) 
+        {
+            BeginMode2D(camera);
+                gridMap.Draw(); 
+                for (const auto& g : gems) DrawCircleV(g.pos, 5, SKYBLUE); 
+                for (const auto& b : pBullets) DrawCircleV(b.pos, 5, YELLOW); 
+                
+                if (isAttacking) { 
+                    DrawCircleLines(pl.pos.x + 11, pl.pos.y + 11, 40, Fade(PURPLE, 0.6f));
+                }
+                
+                if (plInvincTimer <= 0 || (int)(GetTime()*15)%2 == 0) DrawRectangleV(pl.pos, pl.size, pl.color); 
+                
+                for (const Enemy& e : enemies) { 
+                    if(e.hp > 0) DrawEnemy(e); 
+                }
+            EndMode2D();
+
+            PlayerInfo uiData = { (int)pl.hp, pl.hpMax, 50.0f, 50.0f, pl.speed, 1, 100, pl.skillList };
+            DrawRoguelikeHUD(uiData);
+            DrawText(TextFormat("LV: %i  EXP: %i/%i", pl.level, pl.exp, pl.expNext), 10, 80, 20, WHITE);
+        }
+        else if (currentState == STATE_GAMEOVER) 
+        {
+            ShowCursor();
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, 0.5f));
+            DrawText("  YOU DIE", screenWidth/2 - 130, screenHeight/2 - 100, 45, RAYWHITE);
+            
+            if (DrawMenuButton({ 260, 380, 200, 60 }, "BACK TO MENU", DARKGRAY)) {
+                currentState = STATE_MENU;
+            }
+        }
+          
+        if (currentState != STATE_PLAYING) {
+            DrawFantasyCursor(); 
+        } 
         EndDrawing();
     }
 

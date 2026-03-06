@@ -5,10 +5,11 @@ Map::Map() {
 }
 
 void Map::LoadAssets() {
-    tileset = LoadTexture("assets\\tileset.png");
+    tileset = LoadTexture("src\\assets\\tileset.png");
+    
     // ถ้าโหลดไม่สำเร็จ id ของ texture จะเป็น 0
     if (tileset.id == 0) {
-        TraceLog(LOG_ERROR, "FAILED TO LOAD TILESET! Check path: assets/tileset.png");
+        TraceLog(LOG_ERROR, "FAILED TO LOAD TILESET! Check path: src\\assets\\tileset.png");
     } else {
         TraceLog(LOG_INFO, "TILESET LOADED SUCCESSFULLY!");
     }
@@ -44,30 +45,39 @@ void Map::GenerateNewRoom() {
     data[rows/2][cols-1] = 2;     // ประตูขวา
 }
 void Map::Draw() {
-for (int y = 0; y < rows; y++) {
+    for (int y = 0; y < rows; y++) {
         for (int x = 0; x < cols; x++) {
             float posX = x * tileSize;
             float posY = y * tileSize;
 
-            // Rectangle สำหรับ "ตัด" รูปภาพจาก tileset
-            // สมมติว่าภาพแต่ละช่องกว้าง 48x48 pixel
-            Rectangle crop;
-            crop.width = 32;
-            crop.height = 32;
-            crop.y = 0; // สมมติว่าทุกภาพอยู่แถวเดียวกันหมด
-
             int tileID = data[y][x];
-            
-            if (tileID == 0) { // พื้น
-                crop.x = 0; 
-            } else if (tileID == 1) { // กำแพง
-                crop.x = 32; 
-            } else if (tileID == 2) { // ประตู
-                crop.x = 64; 
-            }
 
-            // วาดภาพที่ตัดมา ลงบนหน้าจอ
-            DrawTextureRec(tileset, crop, {posX, posY}, WHITE);
+            // --- ระบบสำรอง: ถ้าโหลดรูปไม่ขึ้น (id == 0) ให้เทสีพื้นแทน จะได้ไม่จอดำ! ---
+            if (tileset.id == 0) {
+                if (tileID == 0) {
+                    DrawRectangle(posX, posY, tileSize, tileSize, DARKGRAY); // พื้น
+                } else if (tileID == 1) {
+                    DrawRectangle(posX, posY, tileSize, tileSize, LIGHTGRAY); // กำแพง
+                } else if (tileID == 2) {
+                    DrawRectangle(posX, posY, tileSize, tileSize, BROWN); // ประตู
+                }
+                DrawRectangleLines(posX, posY, tileSize, tileSize, BLACK); // ตีเส้นตารางให้ดูง่ายขึ้น
+            } 
+            // --- ระบบปกติ: ถ้าระบบหาไฟล์รูปเจอ ก็ตัดรูปมาวาดตามปกติ ---
+            else {
+                Rectangle crop;
+                crop.width = 16;
+                crop.height = 16;
+                crop.y = 0; 
+
+                if (tileID == 0) crop.x = 0; 
+                else if (tileID == 1) crop.x = 16; 
+                else if (tileID == 2) crop.x = 32; 
+
+                // วาดภาพโดยขยายจาก 16x16 ให้เต็มช่อง tileSize (32)
+                Rectangle dest = {posX, posY, (float)tileSize, (float)tileSize};
+                DrawTexturePro(tileset, crop, dest, {0, 0}, 0.0f, WHITE);
+            }
         }
     }
 }
