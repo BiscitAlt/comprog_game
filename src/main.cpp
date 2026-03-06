@@ -1,257 +1,101 @@
-    #include "raylib.h"
-    #include "rlgl.h"
-    #include "raymath.h"
-    #include <vector>
+#include "raylib.h"
+#include "rlgl.h"
+#include "raymath.h"
+#include <vector>
+#include <string>
 
-    // รวมไฟล์ Header
-    #include "enemy.h"
-    #include "player.h"
-    #include "item.h"
-    #include "map.h"
-    #include "ui.h"
-    #include "sword.h"
-    #include "gun.h"
-    #include "bullet.h"
-    #include "heal_potion.h"
-    #include "magic_weapon.h"
-    #include "magic_projectile.h"
-    #include "loot_box.h"
-    #include "exp_orb.h"
+// รวมไฟล์ Header ของระบบต่างๆ ที่แยกไว้
+#include "enemy.h"     
+#include "player.h"    
+#include "item.h"       
+#include "map.h"       
+#include "ui.h"         
+#include "database.h"  
 
-    std::vector<ExpOrb> expOrbs;
+// --- ส่วนที่ 1: การจัดการสถานะหน้าจอ ---
+enum GameState { STATE_MENU, STATE_PLAYING, STATE_GAMEOVER };
+GameState currentState = STATE_MENU; 
 
-    // ===== ประเภทอาวุธ =====
-    enum WeaponType {
-        WEAPON_NONE,          // มือเปล่า
-        WEAPON_SWORD,         // ดาบ
-        WEAPON_GUN,           // ปืน
-        WEAPON_MAGIC          // ★ เวทมนตร์ (เพิ่ม)
-    };
+int main() 
+{
+    // --- การตั้งค่าหน้าต่างและตัวแปรเริ่มต้น  ---
+    const int screenWidth = 720;
+    const int screenHeight = 720;
+    InitWindow(screenWidth, screenHeight, "Hell project");
+    SetTargetFPS(60); 
+    HideCursor(); 
 
-    int main()
-    {
-        // =========================
-        // Init
-        // =========================
-        const int screenWidth = 720;
-        const int screenHeight = 720;
+    // สร้างอ็อบเจกต์ผู้เล่นและกำหนดค่าสถานะเริ่มต้น
+    Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
+    player pl = { plPos, {20.0f, 20.0f}, 2.0f, RED, "Hero", 100, 100, 50, 50, 10, {} };
+    
+    float attackAnimTimer = 0.0f; // ตัวนับเวลาสำหรับอนิเมชั่นการโจมตี
+    bool isAttacking = false;     // สถานะเช็คการโจมตี
+    
+    std::vector<Enemy> enemies;            // รายการศัตรูในฉาก
+    std::vector<MonsterTemplate> db = GetMonsterDb(); // ดึงข้อมูลมอนสเตอร์จากฐานข้อมูล
+    Map gridMap(30, 30, 20, 0);            // อ็อบเจกต์แผนที่
 
-        InitWindow(screenWidth, screenHeight, "ชื่อเกมยังไม่ตั้ง");
-        SetTargetFPS(60);
-        HideCursor();
+    // ตั้งค่ากล้อง 2D สำหรับติดตามตัวละคร
+    Camera2D camera = { 0 };
+    camera.zoom = 1.0f;
+    camera.offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
 
-        // ===== Player =====
-        Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
-        player pl = { plPos, {20, 20}, 2.0f, RED, 100, 100, 100.0f, 100.0f,
-              1,        // level
-              0,        // exp
-              50        // expToNext
-        };
-        // ===== Sword =====
-        Sword sword;
-        SwordType randomType = (SwordType)GetRandomValue(0, 2);
-        InitSword(sword, { pl.pos.x + 100, pl.pos.y }, randomType);
-        std::vector<SwordWave> swordWaves;
+    // พื้นหลัง lobby
+    Texture2D lobbygame = LoadTexture("assets\\BG1\\image_1_1772589236218.jpg");
 
-        // ===== Gun =====
-        Gun gun;
-        GunType type = (GunType)GetRandomValue(0, 2);
-        InitGun(gun, { pl.pos.x - 120, pl.pos.y }, type);
-        std::vector<Bullet> bullets;
-
-        // ===== Heal Potion =====
-        HealPotion healPotion;
-        InitHealPotion(
-            healPotion,
-            { pl.pos.x + 60, pl.pos.y + 60 },
-            30
-        );
-
-        // ===== Magic  =====
-        MagicWeapon magic;
-        InitMagicWeapon(magic, { pl.pos.x - 160, pl.pos.y });
-        std::vector<MagicProjectile> magicProjectiles;
-
-        // ===== Loot Box =====
-        LootBox lootBox;
-        InitLootBox(lootBox, { pl.pos.x + 200, pl.pos.y });
-
-        LootType lootResult;
-        bool lootOpened = false;
-
-        // ===== Weapon state =====
-        WeaponType currentWeapon = WEAPON_NONE;
-
-        // ===== Enemy =====
-        int enemyCount = GetRandomValue(2, 5);
-        std::vector<Enemy> enemies;
-        for (int i = 0; i < enemyCount; i++)
-        {
-            Enemy e;
-            Vector2 spawnPos = {
-                plPos.x + (float)GetRandomValue(-200, 200),
-                plPos.y + (float)GetRandomValue(-200, 200)
-            };
-            InitEnemy(e, spawnPos);
-            enemies.push_back(e);
-        }
-
-        // ===== Map =====
-        SetRandomSeed(GetTime());
-        Map gridMap(30, 30, 20, GetRandomValue(0, 50));
-
-        // ===== Camera =====
-        Camera2D camera = { 0 };
-        camera.zoom = 1.0f;
-        camera.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
-
-        float plHitTimer = 0.0f;
-        float plInvincibleTimer = 0.0f;
-
-        // =========================
-        // Game Loop
-        // =========================
-        while (!WindowShouldClose())
-        {
-            float dt = GetFrameTime();
-            
-            // ===== Mana regen =====
-            pl.mana += 0.5f * dt;   // ฟื้น 0.5/วินาที
-            if (pl.mana > pl.manaMax)
-            pl.mana = pl.manaMax;
-
-            // ตัวกระพริบเมื่อโดนตี
-            if (plHitTimer > 0) plHitTimer -= dt;
-            if (plInvincibleTimer > 0) plInvincibleTimer -= dt;
-
-            // ===== Camera update =====
-            camera.target = { pl.pos.x + 10, pl.pos.y + 10 };
-            float scale = 0.2f * GetMouseWheelMove();
-            camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.125f, 64.0f);
-            if (IsKeyPressed(KEY_R)) camera.zoom = 1.0f;
-
-             // ===== Player movement =====
-            plCollision(pl.pos, pl.size, pl.speed, gridMap);
-
-            // ===== Heal Potion update ===== (ของใหม่)
-            UpdateHealPotion(healPotion, pl);
-
-            // ===== Enemy update =====
-            for (Enemy& e : enemies)
-                UpdateEnemy(e, pl.pos);
-
-            Rectangle playerRec = {
-                pl.pos.x, pl.pos.y,
-                pl.size.x, pl.size.y
-            };
-            for (ExpOrb& orb : expOrbs)
-            {
-                UpdateExpOrb(orb, playerRec, pl.exp);
-            }
-            if (pl.exp >= pl.expToNext)
-            {
-            pl.level++;
-            pl.exp = 0;
-            pl.expToNext += 20;  // เพิ่มความยาก
-
-             pl.hpMax += 20;
-            pl.manaMax += 15;
-
-            pl.hp = pl.hpMax;        // เติมเต็ม
-            pl.mana = pl.manaMax;
-            }
-            
-            // ===== loot boox update =====
-            lootOpened = false;
-            UpdateLootBox(lootBox, playerRec, lootResult, lootOpened);
-
-            if (lootOpened)
-            {
-            switch (lootResult)
-            {
-            case LOOT_HEAL:
-            pl.hp = Clamp(pl.hp + 30, 0, pl.hpMax);
-            break;
-
-            case LOOT_SWORD:
-            sword.pickedUp = true;
-            currentWeapon = WEAPON_SWORD;
-            break;
-
-            case LOOT_GUN:
-            gun.pickedUp = true;
-            currentWeapon = WEAPON_GUN;
-            break;
-
-            case LOOT_MAGIC:
-            magic.pickedUp = true;
-            currentWeapon = WEAPON_MAGIC;
-            break;
-        }
+    // --- สร้างละอองไฟหน้า lobby ---
+    std::vector<fireeffect> embers;
+    for (int i = 0; i < 60; i++) { // สร้าง 60 เม็ด
+        embers.push_back({
+            {(float)GetRandomValue(0, 720), (float)GetRandomValue(0, 720)}, 
+            (float)GetRandomValue(5, 15) / 10.0f, 
+            (float)GetRandomValue(3, 8) / 10.0f
+        });
     }
 
-            // ===== Mouse direction =====
-            Vector2 mouseWorld = GetScreenToWorld2D(GetMousePosition(), camera);
-            Vector2 diff = Vector2Subtract(mouseWorld, pl.pos);
-            Vector2 dir = (Vector2Length(diff) > 0.01f)
-                ? Vector2Normalize(diff)
-                : (Vector2){ 1, 0 };
+    // --- 2. ลูปหลักของเกม (MAIN GAME LOOP) ---
+    while (!WindowShouldClose()) 
+    {
+        // --- ส่วนอัปเดตตรรกะเกม (UPDATE LOGIC) ---
+        if (currentState == STATE_PLAYING) 
+        {
+            HideCursor();
+            // อัปเดตตำแหน่งกล้องตามตัวละคร
+            camera.target = (Vector2){ pl.pos.x + 10.0f, pl.pos.y + 10.0f };
+            
+            // ระบบซูมภาพด้วยเมาส์ (Camera Zoom)
+            float scale = 0.2f * GetMouseWheelMove();
+            camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.125f, 64.0f);
 
-            // =========================
-            // Weapon pickup
-            // =========================
+            // ตรวจสอบการเคลื่อนที่และการชนกำแพงของผู้เล่น
+            plCollision(pl.pos, pl.size, pl.speed, gridMap);
 
-            // ----- Sword -----
-            UpdateSword(sword, pl.pos, pl.size, dir, enemies);
-            if (sword.pickedUp && currentWeapon != WEAPON_SWORD)
-            {
-                if (currentWeapon == WEAPON_GUN)
-                {
-                    gun.pickedUp = false;
-                    gun.pos = Vector2Add(pl.pos, { -40, 0 });
+            // อัปเดตสถานะและการชนของศัตรูแต่ละตัว
+            for (Enemy& e : enemies) {
+                if (e.hp > 0) {
+                    UpdateEnemy(e, pl.pos);
+                    // ตรวจสอบการชนระหว่างศัตรูกับผู้เล่น เพื่อลดค่า HP
+                    if (CheckCollisionRecs({pl.pos.x, pl.pos.y, pl.size.x, pl.size.y}, {e.pos.x, e.pos.y, e.size.x, e.size.y})) {
+                        pl.hp -= e.attack * GetFrameTime();
+                    }
                 }
-
-                if (currentWeapon == WEAPON_MAGIC)
-                {
-                    magic.pickedUp = false;
-                    magic.pos = Vector2Add(pl.pos, { 60, 0 });
-                }
-                currentWeapon = WEAPON_SWORD;
             }
 
-            // ----- Gun -----
-            UpdateGun(gun, pl.pos, pl.size);
-            if (gun.pickedUp && currentWeapon != WEAPON_GUN)
-            {
-                if (currentWeapon == WEAPON_SWORD)
-                {
-                    sword.pickedUp = false;
-                    sword.pos = Vector2Add(pl.pos, { 40, 0 });
+            // ระบบการโจมตี (Player Attack)
+            if (IsKeyPressed(KEY_SPACE)) {
+                isAttacking = true;
+                attackAnimTimer = 0.15f;
+                // กำหนดขอบเขตการโจมตี 
+                Rectangle atkArea = { pl.pos.x - 20, pl.pos.y - 20, pl.size.x + 40, pl.size.y + 40 };
+                for (Enemy& e : enemies) {
+                    if (e.hp > 0 && CheckCollisionRecs(atkArea, {e.pos.x, e.pos.y, e.size.x, e.size.y})) {
+                        e.hp -= pl.attack;
+                        // ระบบผลักศัตรู 
+                        Vector2 dir = Vector2Normalize(Vector2Subtract(e.pos, pl.pos));
+                        e.pos = Vector2Add(e.pos, Vector2Scale(dir, 15.0f));
+                    }
                 }
-
-                if (currentWeapon == WEAPON_MAGIC)
-                {
-                    magic.pickedUp = false;
-                    magic.pos = Vector2Add(pl.pos, { 60, 0 });
-                }
-                currentWeapon = WEAPON_GUN;
-            }
-
-            // ----- Magic  -----
-            UpdateMagicWeapon(magic, pl.pos, pl.size, dt);
-            if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
-            {
-                if (currentWeapon == WEAPON_SWORD)
-                {
-                    sword.pickedUp = false;
-                    sword.pos = Vector2Add(pl.pos, { 40, 0 });
-                }
-                if (currentWeapon == WEAPON_GUN)
-                {
-                    gun.pickedUp = false;
-                    gun.pos = Vector2Add(pl.pos, { -40, 0 });
-                }
-                currentWeapon = WEAPON_MAGIC;
             }
 
             // จัดการเวลาการแสดงผลอนิเมชั่นโจมตี
