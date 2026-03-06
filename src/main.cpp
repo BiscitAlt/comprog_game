@@ -39,10 +39,11 @@ int main()
     
     std::vector<Enemy> enemies;            
     std::vector<Gem> gems;           
-    std::vector<PlayerBullet> pBullets; 
+    std::vector<PlayerBullet> pBullets;
+    std::vector<MonsterTemplate> db = GetMonsterDb(); // ดึงข้อมูลมอนสเตอร์จากฐานข้อมูล  
+    Map gridMap; // สุ่มสร้างแผนที่ใหม่
+    gridMap.LoadAssets(); // โหลดทรัพยากรของแผนที่ (เรียกครั้งเดียวตอนเริ่มเกม)
 
-    std::vector<MonsterTemplate> db = GetMonsterDb(); 
-    Map gridMap(40, 40, 25, 60); 
     Camera2D camera = { 0 };
     camera.zoom = 1.0f;
     camera.offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
@@ -159,6 +160,15 @@ int main()
                 pl.hp = 0;
                 currentState = STATE_GAMEOVER;
             }
+            
+            // เช็คว่าผู้เล่นเหยียบประตูไหม
+            if (gridMap.IsDoor(pl.pos.x, pl.pos.y)) {
+                gridMap.GenerateNewRoom(); // สุ่มห้องใหม่ทันที!
+                
+                // ย้ายตัวผู้เล่นกลับมาตรงกลาง (หรือย้ายไปฝั่งตรงข้ามของประตู)
+                pl.pos.x = screenWidth / 2.0f;
+                pl.pos.y = screenHeight / 2.0f;
+            }
         }
 
         BeginDrawing();
@@ -175,21 +185,29 @@ int main()
             DrawText(title, screenWidth/2 - titleWidth/2, 150, 50, GOLD);
             
             if (DrawMenuButton({ 260, 300, 200, 60 }, "START ", DARKPURPLE)) {
+                // 1. รีเซ็ตผู้เล่น
                 pl.hp = pl.hpMax;
                 pl.level = 1; pl.exp = 0; pl.expNext = 10;
-                pl.pos = { screenWidth / 2.0f, screenHeight / 2.0f };
+                pl.pos = { (gridMap.cols * gridMap.tileSize) / 2.0f, (gridMap.rows * gridMap.tileSize) / 2.0f };
+                
+                // 2. เคลียร์ของเก่า
                 enemies.clear(); 
                 gems.clear();
                 pBullets.clear();
                 
+                // 3. สุ่มมอนสเตอร์ใหม่
                 int enemyCount = GetRandomValue(3, 6);
                 for (int i = 0; i < enemyCount; i++) {
                     Enemy e;
                     Vector2 spawnPos = { pl.pos.x + (float)GetRandomValue(-200, 200), pl.pos.y + (float)GetRandomValue(-200, 200) };
-                    InitEnemy(e, spawnPos, (EnemyType)GetRandomValue(0, 3));
+                    int randIdx = GetRandomValue(0, (int)db.size() - 1);
+                    InitEnemy(e, spawnPos, db[randIdx].name, db[randIdx].hp, db[randIdx].atk);
+                    e.color = db[randIdx].color;
                     enemies.push_back(e);
                 }
-                gridMap = Map(40, 40, 25, 60); 
+                
+                // 4. สุ่มห้องใหม่และเข้าเกม!
+                gridMap.GenerateNewRoom(); 
                 currentState = STATE_PLAYING;
             }
 
@@ -234,6 +252,8 @@ int main()
         EndDrawing();
     }
 
+    // ปิดหน้าต่างและคืนค่าทรัพยากร
+    gridMap.UnloadAssets();
     UnloadTexture(lobbygame);
     CloseWindow();
     return 0;
