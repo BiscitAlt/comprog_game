@@ -1,25 +1,57 @@
-#include "raylib.h"
 #include "player.h"
+#include "raymath.h"
 
-void plCollision(Vector2 &plPos, Vector2 plSize, float plSpeed, Map &map)
+// ======================
+// Update Player
+// ======================
+void plUpdate(player &pl, Map &map)
 {
-    // สร้างตำแหน่งจำลองว่า "ถ้าเดินไปแล้วจะเป็นยังไง"
-    Vector2 nextPos = plPos;
+    plMovement(pl.pos, pl.speed);
 
-    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) nextPos.x += plSpeed;
-    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) nextPos.x -= plSpeed;
-    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W)) nextPos.y -= plSpeed;
-    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) nextPos.y += plSpeed;
+    plCollision(
+        pl.pos,
+        pl.size,
+        pl.speed,
+        map
+    );
+}
 
-    // เช็ค 4 มุมของตัวละครว่าชนกำแพงไหม
-    bool collision = 
-        map.IsWall(nextPos.x, nextPos.y) ||                         // มุมบนซ้าย
-        map.IsWall(nextPos.x + plSize.x, nextPos.y) ||              // มุมบนขวา
-        map.IsWall(nextPos.x, nextPos.y + plSize.y) ||              // มุมล่างซ้าย
-        map.IsWall(nextPos.x + plSize.x, nextPos.y + plSize.y);     // มุมล่างขวา
+// ======================
+// Movement
+// ======================
+void plMovement(Vector2 &plPos, float speed)
+{
+    if (IsKeyDown(KEY_W)) plPos.y -= speed;
+    if (IsKeyDown(KEY_S)) plPos.y += speed;
+    if (IsKeyDown(KEY_A)) plPos.x -= speed;
+    if (IsKeyDown(KEY_D)) plPos.x += speed;
+}
 
-    if (!collision) {
-        // ถ้าไม่ชนทุกมุม ถึงจะอนุญาตให้ตำแหน่งปัจจุบันเปลี่ยนไปเป็นตำแหน่งใหม่
-        plPos = nextPos;
-    }
+// ======================
+// Collision (ยังไม่ใช้ Map)
+// ======================
+void plCollision(
+    Vector2 &plPos,
+    Vector2 plSize,
+    float plSpeed,
+    Map &map
+)
+{
+    // กันหลุดจอ (แทน collision map)
+    if (plPos.x < 0) plPos.x = 0;
+    if (plPos.y < 0) plPos.y = 0;
+
+    if (plPos.x > GetScreenWidth() - plSize.x)
+        plPos.x = GetScreenWidth() - plSize.x;
+
+    if (plPos.y > GetScreenHeight() - plSize.y)
+        plPos.y = GetScreenHeight() - plSize.y;
+}
+
+// ======================
+// Draw Player
+// ======================
+void DrawPlayer(player &pl)
+{
+    DrawRectangleV(pl.pos, pl.size, pl.color);
 }
