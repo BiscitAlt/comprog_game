@@ -5,7 +5,7 @@ Map::Map() {
 }
 
 void Map::LoadAssets() {
-    tileset = LoadTexture("C:\\Users\\Administrator\\projects\\comprog_game\\assets\\tileset.png");
+    tileset = LoadTexture("assets\\tileset.png");
     // ถ้าโหลดไม่สำเร็จ id ของ texture จะเป็น 0
     if (tileset.id == 0) {
         TraceLog(LOG_ERROR, "FAILED TO LOAD TILESET! Check path: assets/tileset.png");
@@ -33,8 +33,8 @@ void Map::GenerateNewRoom() {
     // 2. สุ่มเพิ่มกล่องในแมพ (ไม่เกิน maxBoxes กล่อง)
     SetRandomSeed(GetTime());
     for (int i = 0; i < maxBoxes; i++) {
-        int randX = GetRandomValue(1, cols - 2); // ไม่ให้สุ่มไปที่ขอบ
-        int randY = GetRandomValue(1, rows - 2);
+        int randX = GetRandomValue(2, cols - 2); // ไม่ให้สุ่มไปที่ขอบ
+        int randY = GetRandomValue(2, rows - 2);
         data[randY][randX] = 1; // เพิ่มกล่องเป็นกำแพง
     }
 
@@ -42,14 +42,6 @@ void Map::GenerateNewRoom() {
     data[rows-1][cols/2] = 2;     // ประตูล่าง
     data[rows/2][0] = 2;          // ประตูซ้าย
     data[rows/2][cols-1] = 2;     // ประตูขวา
-
-    // 3. สุ่มวางกำแพงหรือสิ่งกีดขวางข้างในห้อง
-    int obstacleCount = GetRandomValue(5, 15); // สุ่มจำนวนสิ่งกีดขวาง
-    for (int i = 0; i < obstacleCount; i++) {
-        int rx = GetRandomValue(2, cols - 3); // สุ่มตำแหน่งแกน X
-        int ry = GetRandomValue(2, rows - 3); // สุ่มตำแหน่งแกน Y
-        data[ry][rx] = 1; // วางกำแพง
-    }
 }
 void Map::Draw() {
 for (int y = 0; y < rows; y++) {
