@@ -18,20 +18,20 @@ void InitSword(Sword& s, Vector2 dropPos, SwordType type)
     {
         case SWORD_ENERGY:
             s.cooldown = 0.5f;
-            s.damage = 25;
-            s.manaCost = 1;
+            s.damage = 20;
+            s.manaCost = 0;
             break;
 
         case SWORD_SPIN:
             s.cooldown = 1.0f;
-            s.damage = 40;
+            s.damage = 22;
             s.spinRadius = 80;
-            s.manaCost = 1;
+            s.manaCost = 0;
             break;
 
         case SWORD_LIFESTEAL:
             s.cooldown = 0.6f;
-            s.damage = 12;              // ดาเมจเบา
+            s.damage = 6;              // ดาเมจเบา
             s.lifeStealPercent = 0.5f;  // ดูด 50% ของดาเมจ
             s.manaCost = 0;
             break;
@@ -148,7 +148,7 @@ void UseSword(
     }
     else if (s.type == SWORD_LIFESTEAL)
     {
-        float attackRadius = 60.0f;
+        float attackRadius = 50.0f;
         int totalDamage = 0;
 
     for (auto& e : enemies)

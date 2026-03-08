@@ -24,7 +24,7 @@ struct Gun
 };
 
 void InitGun(Gun& gun, Vector2 pos, GunType type);
-void UpdateGun(Gun& gun, Vector2 plPos, Vector2 plSize);
+void UpdateGun(Gun& gun, Vector2 plPos, Vector2 plSize, float dt);
 
 void ShootGun(Gun& gun,
               std::vector<Bullet>& bullets,

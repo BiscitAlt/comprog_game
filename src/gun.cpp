@@ -13,21 +13,25 @@ void InitGun(Gun& gun, Vector2 pos, GunType type)
     switch (type)
     {
         case GunType::SHOTGUN:
-            gun.fireRate = 0.6f;
+            gun.fireRate = 0.9f;
             gun.bulletSpeed = 500;
             break;
 
         case GunType::ROCKET:
-            gun.fireRate = 1.0f;
-            gun.bulletSpeed = 400;
+            gun.fireRate = 1.4f;
+            gun.bulletSpeed = 650;
             break;
     }
 }
 
-void UpdateGun(Gun& gun, Vector2 plPos, Vector2 plSize)
+void UpdateGun(Gun& gun, Vector2 plPos, Vector2 plSize, float dt)
 {
     if (gun.fireTimer > 0)
-        gun.fireTimer -= GetFrameTime();
+    {
+        gun.fireTimer -= dt;
+        if (gun.fireTimer < 0)
+            gun.fireTimer = 0;
+    }
 
     if (gun.pickedUp) return;
 
@@ -46,6 +50,7 @@ void ShootGun(Gun& gun,
               float& mana)
 {
     if (!gun.pickedUp) return;
+    dir = Vector2Normalize(dir);
 
     Vector2 center = {
         plPos.x + plSize.x / 2,
@@ -57,18 +62,18 @@ void ShootGun(Gun& gun,
     {
         if (gun.fireTimer > 0) return;
 
-        const int pellet = 6;
-        const float spread = 0.4f;
+        const int pellet = 4;
+        const float spread = 0.35f;
 
         for (int i = 0; i < pellet; i++)
         {
             float angle = atan2f(dir.y, dir.x);
-            angle += GetRandomValue(-100, 100) / 100.0f * spread;
+            angle += GetRandomValue(-120, 120) / 100.0f * spread;
 
             Vector2 d = { cosf(angle), sinf(angle) };
 
             Bullet b;
-            b.pos = center;
+            b.pos = Vector2Add(center, Vector2Scale(d, 16));
             b.vel = Vector2Scale(d, gun.bulletSpeed);
             b.radius = 4;
             b.active = true;
@@ -88,12 +93,12 @@ void ShootGun(Gun& gun,
         if (gun.fireTimer > 0) return;
 
         Bullet b;
-        b.pos = center;
+        b.pos = Vector2Add(center, Vector2Scale(dir, 16));
         b.vel = Vector2Scale(dir, gun.bulletSpeed);
         b.radius = 8;
         b.active = true;
         b.type = BulletType::ROCKET;
-        b.lifeTime = 3.0f;
+        b.lifeTime = 2.2f;
 
         bullets.push_back(b);
 

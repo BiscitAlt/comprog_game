@@ -15,7 +15,7 @@ void SpawnMagicProjectile(
     m.dir = Vector2Normalize(Vector2Subtract(targetPos, startPos));
     m.speed = 400.0f;
     m.radius = 6;
-    m.damage = 30;
+    m.damage = 18;
     m.active = true;
     m.type = type;
     m.effectTimer = 0.0f;
@@ -62,9 +62,9 @@ void UpdateMagicProjectiles(
                     // ระเบิดรอบตัว
                     for (auto& other : enemies)
                     {
-                        if (Vector2Distance(other.pos, e.pos) < 60)
+                        if (Vector2Distance(other.pos, e.pos) < 50)
                         {
-                            other.hp -= 15;
+                            other.hp -= 8;
                             other.burnTimer = 3.0f;
                         }
                     }
@@ -82,7 +82,7 @@ void UpdateMagicProjectiles(
                     // ===== ครบ 3 stack ระเบิด =====
                     if (e.iceStack >= 3)
                         {
-                        e.hp -= 100; // ความเสียหายจากระเบิด
+                        e.hp -= -35; // 3 stack boom
                         float explosionRadius = 80.0f;
 
                     for (auto& other : enemies)
@@ -91,7 +91,7 @@ void UpdateMagicProjectiles(
 
                     if (dist < explosionRadius)
             {
-                    other.hp -= 300;
+                    other.hp -= 10;
                     other.slowTimer = 3.0f;
                     other.slowPower = 0.2f;
             }
@@ -99,13 +99,13 @@ void UpdateMagicProjectiles(
 
             e.iceStack = 0;
 
-                // 💥 ตั้งค่าเอฟเฟคระเบิด
+                //  ตั้งค่าเอฟเฟคระเบิด
                 m.effectType = EFFECT_ICE_EXPLODE;
                 m.effectRadius = explosionRadius;
     }
                 else
             {
-                // ❄ โดนปกติ
+                //  โดนปกติ
                 m.effectType = EFFECT_HIT;
                 m.effectRadius = 30;
     }
@@ -117,14 +117,14 @@ void UpdateMagicProjectiles(
                     float damage = m.damage;
                     Enemy* current = &e;
 
-                    for (int i = 0; i < 3; i++)
+                    for (int i = 0; i < 4; i++)
                     {
                         if (!current) break;
 
                         current->hp -= damage;
                         current->electrifiedTimer = 2.0f;
 
-                        damage *= 0.8f; // ลด 20%
+                        damage *= 0.65f; // ลด 35%
 
                         // หาเป้าหมายใกล้สุด
                         Enemy* next = nullptr; 

@@ -21,15 +21,15 @@ void InitMagicWeapon(
     switch (type)
     {
         case FIRE_STAFF:
-            m.cooldown = 0.6f;
+            m.cooldown = 0.9f;
             break;
 
         case ICE_WAND:
-            m.cooldown = 0.4f;
+            m.cooldown = 0.7f;
             break;
 
         case LIGHTNING_ROD:
-            m.cooldown = 0.8f;
+            m.cooldown = 1.1f;
             break;
     }
 }
