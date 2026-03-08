@@ -225,7 +225,8 @@ if (!enemies.empty())
                     enemies[i].poisonTimer = 0;
 
                     screenShake = 0.15f;
-                }     
+                }
+                }   
                 if (enemies[i].hp <= 0) {
                     gems.push_back({ enemies[i].pos, 2, true });
                     enemies.erase(enemies.begin() + i);
