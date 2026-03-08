@@ -106,3 +106,21 @@ void DrawRoguelikeHUD(PlayerInfo player) {
     DrawText(txt.c_str(), x + 10, y + 5, 20, txtCol);
 
 }
+void DrawPauseMenu(int screenWidth, int screenHeight, bool* isResumed, bool* isQuit) {
+    // 1. ฉากหยุดเกม
+    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, 0.6f));
+
+    //  วาดกรอบเมนู
+    Rectangle box = { screenWidth/2.0f - 150, screenHeight/2.0f - 100, 300, 200 };
+    DrawRectangleRec(box, Fade(DARKGRAY, 0.9f));
+    DrawRectangleLinesEx(box, 2, GOLD);
+    DrawText("PAUSED", box.x + 90, box.y + 20, 30, GOLD);
+
+    // . วาดปุ่มกด 
+    if (DrawMenuButton({ box.x + 50, box.y + 70, 200, 45 }, "RESUME", GRAY)) {
+        *isResumed = true;
+    }
+    if (DrawMenuButton({ box.x + 50, box.y + 130, 200, 45 }, "QUIT TO MENU", MAROON)) {
+        *isQuit = true;
+    }
+}

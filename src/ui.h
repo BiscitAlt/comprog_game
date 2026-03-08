@@ -30,5 +30,5 @@ void DrawRoguelikeHUD(PlayerInfo player);
 bool DrawMenuButton(Rectangle rect, const char* text, Color baseColor);
 void DrawFantasyCursor();
 void UpdateAndDrawMenuBackground(Texture2D lobbygame, std::vector<fireeffect>& embers, int screenWidth, int screenHeight);
-
+void DrawPauseMenu(int screenWidth, int screenHeight, bool* isResumed, bool* isQuit);
 #endif

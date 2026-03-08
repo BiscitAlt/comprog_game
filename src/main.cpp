@@ -38,7 +38,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "Hell project");
     SetTargetFPS(60); 
 
-    enum GameState { STATE_MENU, STATE_PLAYING, STATE_GAMEOVER };
+    enum GameState { STATE_MENU, STATE_PLAYING, STATE_GAMEOVER, STATE_PAUSED};
     GameState currentState = STATE_MENU; 
 
     Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
@@ -324,6 +324,13 @@ if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
             }
         }
 
+            if (IsKeyPressed(KEY_P)) {
+         if (currentState == STATE_PLAYING) currentState = STATE_PAUSED;
+         else if (currentState == STATE_PAUSED) currentState = STATE_PLAYING;
+}
+
+
+
         BeginDrawing();
         ClearBackground(BLACK);
 
@@ -412,16 +419,32 @@ if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
             DrawRoguelikeHUD(uiData);
             DrawText(TextFormat("LV: %i  EXP: %i/%i", pl.level, pl.exp, pl.expNext), 10, 80, 20, WHITE);
         }
+         // --- วางต่อจากจบส่วน STATE_PLAYING ---
+        else if (currentState == STATE_PAUSED) 
+{
+    bool resume = false;
+    bool quit = false;
+
+    // เรียกฟังก์ชันจาก ui.cpp มาวาดเมนู
+    DrawPauseMenu(screenWidth, screenHeight, &resume, &quit);
+
+    // เช็คผลลัพธ์
+    if (resume) currentState = STATE_PLAYING;
+    if (quit)   currentState = STATE_MENU;
+}
+
+        // แสดงผลการPAUSEDเกม
         else if (currentState == STATE_GAMEOVER) 
         {
             ShowCursor();
             DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, 0.5f));
             DrawText("  YOU DIE", screenWidth/2 - 130, screenHeight/2 - 100, 45, RAYWHITE);
-            
+            DrawText("  Your soul returns to the realm of the gods ", screenWidth/2.65 - 130, screenHeight/1.65 - 100, 20, RAYWHITE);
             if (DrawMenuButton({ 260, 380, 200, 60 }, "BACK TO MENU", DARKGRAY)) {
                 currentState = STATE_MENU;
             }
         }
+
           
         if (currentState != STATE_PLAYING) {
             DrawFantasyCursor(); 
