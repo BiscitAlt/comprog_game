@@ -275,6 +275,17 @@ if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
 
             for (int i = enemies.size() - 1; i >= 0; i--) {
                 UpdateEnemy(enemies[i], pl.pos);
+                // ===== POISON DAMAGE =====
+                if (enemies[i].type == POISON && enemies[i].poisonActive)
+                {
+                 if (enemies[i].poisonTimer >= enemies[i].poisonInterval)
+                {
+                    pl.hp -= enemies[i].atk;
+                    enemies[i].poisonTimer = 0;
+
+                    screenShake = 0.15f;
+                }
+}
                 
                 if (enemies[i].hp <= 0) {
                     gems.push_back({ enemies[i].pos, 2, true });
