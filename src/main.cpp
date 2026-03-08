@@ -209,7 +209,7 @@ if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
 }
 
             float scale = 0.2f * GetMouseWheelMove();
-            camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.125f, 64.0f);
+            camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.8f, 1.4f);
             Vector2 finalTarget = { pl.pos.x + 11.0f, pl.pos.y + 11.0f };
             if (screenShake > 0) {
                 finalTarget.x += GetRandomValue(-6, 6);
@@ -341,7 +341,7 @@ if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
                 // 1. รีเซ็ตผู้เล่น
                 pl.hp = pl.hpMax;
                 pl.level = 1; pl.exp = 0; pl.expNext = 10;
-                pl.pos = { (gridMap.cols * gridMap.tileSize) / 2.0f, (gridMap.rows * gridMap.tileSize) / 2.0f };
+                pl.pos = { screenWidth / 2.0f, screenHeight / 2.0f };
                 
                 // 2. เคลียร์ของเก่า
                 enemies.clear(); 
@@ -359,8 +359,7 @@ if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
                     enemies.push_back(e);
                 }
                 
-                // 4. สุ่มห้องใหม่และเข้าเกม!
-                gridMap.GenerateNewRoom(); 
+                // 4. เข้าเกม!
                 currentState = STATE_PLAYING;
             }
 
@@ -375,8 +374,11 @@ if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
             ? Vector2Normalize(diff)
             : (Vector2){1,0};
             //DrawSkillEffects(skills, pl);
+
+            gridMap.UpdateEndless(pl.pos);
+
             BeginMode2D(camera);
-                gridMap.Draw(); 
+                gridMap.Draw(pl.pos, screenWidth, screenHeight); 
                 DrawSkillEffects(skills, pl);
                 for (const auto& g : gems) DrawCircleV(g.pos, 5, SKYBLUE); 
                 for (const auto& b : pBullets) DrawCircleV(b.pos, 5, YELLOW); 

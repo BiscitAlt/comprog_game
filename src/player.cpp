@@ -6,14 +6,24 @@
 // ======================
 void plUpdate(player &pl, Map &map)
 {
+    // เก็บตำแหน่งปัจจุบันไว้ก่อน หากเดินชนกำแพงจะได้เด้งกลับมาจุดนี้
+    Vector2 oldPos = pl.pos; 
+    
     plMovement(pl.pos, pl.speed);
 
-    plCollision(
-        pl.pos,
-        pl.size,
-        pl.speed,
-        map
-    );
+    // เช็คไม่ให้หลุดขอบแผนที่
+    plCollision(pl.pos, pl.size, pl.speed, map);
+
+    // เช็คว่าตำแหน่งใหม่ชนกำแพงหรือไม่ (เช็คจาก 4 มุมของตัวละคร)
+    bool hitWall = map.IsWall(pl.pos.x, pl.pos.y) || 
+                   map.IsWall(pl.pos.x + pl.size.x, pl.pos.y) || 
+                   map.IsWall(pl.pos.x, pl.pos.y + pl.size.y) || 
+                   map.IsWall(pl.pos.x + pl.size.x, pl.pos.y + pl.size.y);
+
+    // ถ้าตำแหน่งใหม่เป็นกำแพง ให้ดึงตัวละครกลับมาจุดก่อนเดิน
+    if (hitWall) {
+        pl.pos = oldPos;
+    }
 }
 
 // ======================
@@ -28,24 +38,24 @@ void plMovement(Vector2 &plPos, float speed)
 }
 
 // ======================
-// Collision (ยังไม่ใช้ Map)
+// Collision (พึ่งพา map.IsWall ใน plUpdate เพื่อกันชนสิ่งกีดขวางอย่างเดียว)
 // ======================
-void plCollision(
-    Vector2 &plPos,
-    Vector2 plSize,
-    float plSpeed,
-    Map &map
-)
+void plCollision(Vector2 &plPos, Vector2 plSize, float plSpeed, Map &map)
 {
-    // กันหลุดจอ (แทน collision map)
-    if (plPos.x < 0) plPos.x = 0;
-    if (plPos.y < 0) plPos.y = 0;
+    // คำนวณขนาดที่แท้จริงของแผนที่ (960 x 960)
+//    float mapWidth = map.cols * map.tileSize;
+//   float mapHeight = map.rows * map.tileSize;
 
-    if (plPos.x > GetScreenWidth() - plSize.x)
-        plPos.x = GetScreenWidth() - plSize.x;
+    // กันหลุดขอบซ้าย-บน
+//    if (plPos.x < 0) plPos.x = 0;
+//    if (plPos.y < 0) plPos.y = 0;
 
-    if (plPos.y > GetScreenHeight() - plSize.y)
-        plPos.y = GetScreenHeight() - plSize.y;
+    // กันหลุดขอบขวา-ล่าง (ใช้ขนาดแผนที่แทน GetScreenWidth/Height)
+//    if (plPos.x > mapWidth - plSize.x)
+//        plPos.x = mapWidth - plSize.x;
+
+//    if (plPos.y > mapHeight - plSize.y)
+//        plPos.y = mapHeight - plSize.y;
 }
 
 // ======================
