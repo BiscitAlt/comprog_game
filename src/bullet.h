@@ -22,9 +22,19 @@ struct Bullet
 
 };
 
+struct BulletExplosion
+{
+    Vector2 pos;
+    float radius;
+    float timer;
+};
+
+extern std::vector<BulletExplosion> bulletExplosions;
+
 void UpdateBullets(
     std::vector<Bullet>& bullets,
     std::vector<Enemy>& enemies,
     float dt
 );
 void DrawBullet(const Bullet& b);
+void DrawBulletExplosions();

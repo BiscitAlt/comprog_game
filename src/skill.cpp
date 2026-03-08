@@ -32,7 +32,6 @@ void UpdateSkills(
 {
     // Timer เวลาคลูดาว
     s.voidMeteorTimer += dt;
-    s.phantomBladeAngle += dt * 2.5f;
     s.chainLightningTimer += dt;
     s.poisonMistTimer += dt;
     s.blackHoleTimer += dt;
@@ -40,7 +39,7 @@ void UpdateSkills(
     s.shockwaveTimer += dt;
 
     // VOID METEOR
-    if(s.voidMeteorTimer > 2.0f)
+    if(s.voidMeteorTimer > 3.0f)
     {
         Enemy* target = FindClosestEnemy(pl.pos,enemies,350);
 
@@ -55,7 +54,7 @@ void UpdateSkills(
 
                 if(dist < 100)
                 {
-                    e.hp -= 60;
+                    e.hp -= 40;
                 }
             }
         }
@@ -100,7 +99,7 @@ void UpdateSkills(
 
             if(CheckCollisionRecs(bladeRec,enemyRec))
             {
-                e.hp -= 40 * dt;
+                e.hp -= 18 * dt;
             }
         }
     }
@@ -108,38 +107,46 @@ void UpdateSkills(
 
     // CHAIN LIGHTNING
     if(s.chainLightningTimer > 3.0f)
+{
+    lightningPoints.clear();
+
+    Enemy* target = FindClosestEnemy(pl.pos,enemies,400);
+
+    if(target)
     {
-        lightningPoints.clear();
+        float damage = 35;
 
-        Enemy* target = FindClosestEnemy(pl.pos,enemies,400);
+        Vector2 currentPos = target->pos;
 
-        if(target)
+        std::vector<Enemy*> hitEnemies;
+
+        for(int i=0;i<8;i++)
         {
-            float damage = 50;
+            Enemy* next = FindClosestEnemy(currentPos,enemies,220);
 
-            Vector2 currentPos = pl.pos;
+            if(!next) break;
 
-            for(int i=0;i<20;i++)
-            {
-                Enemy* next = FindClosestEnemy(currentPos,enemies,220);
+            // กันตีตัวเดิม
+            if(std::find(hitEnemies.begin(),hitEnemies.end(),next) != hitEnemies.end())
+                break;
 
-                if(!next) break;
+            lightningPoints.push_back(currentPos);
+            lightningPoints.push_back(next->pos);
 
-                lightningPoints.push_back(currentPos);
-                lightningPoints.push_back(next->pos);
+            next->hp -= damage;
 
-                next->hp -= damage;
+            hitEnemies.push_back(next);
 
-                damage *= 0.97f;
+            damage *= 0.85f;
 
-                currentPos = next->pos;
-            }
-
-            s.chainLightningEffect = 0.4f;
+            currentPos = next->pos;
         }
 
-        s.chainLightningTimer = 0;
+        s.chainLightningEffect = 0.4f;
     }
+
+    s.chainLightningTimer = 0;
+}
 
     // POISON MIST
     if(s.poisonMistTimer > 6.0f)
@@ -163,7 +170,7 @@ void UpdateSkills(
 
             if(dist < 130)
             {
-                e.hp -= 20 * dt;
+                e.hp -= 7 * dt;
             }
         }
     }
@@ -194,18 +201,18 @@ void UpdateSkills(
             {
                 dir = Vector2Normalize(dir);
 
-                e.pos = Vector2Add(e.pos,Vector2Scale(dir,120*dt));
+                e.pos = Vector2Add(e.pos,Vector2Scale(dir,80*dt));
 
                 if(dist < 40)
                 {
-                    e.hp -= 45 * dt;
+                    e.hp -= 18 * dt;
                 }
             }
         }
     }
 
     // BLOOD AURA
-    if(s.bloodAuraTimer > 0.5f)
+    if(s.bloodAuraTimer > 1.0f)
     {
         s.bloodAuraEffect = 0.5f;
 
@@ -215,9 +222,9 @@ void UpdateSkills(
 
             if(dist < 140)
             {
-                e.hp -= 30;
+                e.hp -=18 * dt;
 
-                pl.hp += 4;
+                pl.hp += 2;
 
                 if(pl.hp > pl.hpMax)
                     pl.hp = pl.hpMax;
@@ -242,11 +249,11 @@ void UpdateSkills(
 
                 dir = Vector2Normalize(dir);
 
-                e.pos = Vector2Add(e.pos,Vector2Scale(dir,120));
+                e.pos = Vector2Add(e.pos,Vector2Scale(dir,70));
 
                 e.freezeTimer = 1.0f;
 
-                e.hp -= 35;
+                e.hp -= 20;
             }
         }
 

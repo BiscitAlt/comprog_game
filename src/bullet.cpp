@@ -3,6 +3,7 @@
 #include "enemy.h"
 #include <vector>
 #include <algorithm>
+std::vector<BulletExplosion> bulletExplosions;
 
 void UpdateBullets(
     std::vector<Bullet>& bullets,
@@ -10,6 +11,21 @@ void UpdateBullets(
     float dt
 )
 {
+    // update explosion timers
+    for (auto& ex : bulletExplosions)
+    {
+        ex.timer -= dt;
+    }
+
+    bulletExplosions.erase(
+        std::remove_if(
+            bulletExplosions.begin(),
+            bulletExplosions.end(),
+            [](BulletExplosion& e){ return e.timer <= 0; }
+        ),
+        bulletExplosions.end()
+    );
+
     for (auto& b : bullets)
     {
         if (!b.active) continue;
@@ -47,6 +63,13 @@ void UpdateBullets(
                             other.hp -= 60;
                     }
 
+                    BulletExplosion ex;
+                    ex.pos = b.pos;
+                    ex.timer = 0.35f;
+                    ex.radius = explosionRadius;
+
+                    bulletExplosions.push_back(ex);
+
                     b.active = false;
                     break;
                 }
@@ -81,5 +104,23 @@ void DrawBullet(const Bullet& b)
     else
     {
         DrawCircleV(b.pos, b.radius, YELLOW);
+    }
+}
+
+void DrawBulletExplosions()
+{
+    for (auto& ex : bulletExplosions)
+    {
+        float progress = 1.0f - (ex.timer / 0.35f);
+
+        float radius = ex.radius * progress;
+
+        DrawCircleLinesV(ex.pos, radius, RED);
+
+        DrawCircleV(
+            ex.pos,
+            radius * 0.5f,
+            Fade(ORANGE, 0.35f)
+        );
     }
 }
