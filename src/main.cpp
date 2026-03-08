@@ -100,7 +100,7 @@ int main()
     gridMap.LoadAssets(); // โหลดทรัพยากรของแผนที่ (เรียกครั้งเดียวตอนเริ่มเกม)
 
     Camera2D camera = { 0 };
-    camera.zoom = 1.0f;
+    camera.zoom = 1.2f;
     camera.offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
 
     Texture2D lobbygame = LoadTexture("assets\\BG1\\image_1_1772589236218.jpg");
@@ -209,7 +209,7 @@ if (magic.pickedUp && currentWeapon != WEAPON_MAGIC)
 }
 
             float scale = 0.2f * GetMouseWheelMove();
-            camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.8f, 1.4f);
+            camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 1.0f, 1.8f);
             Vector2 finalTarget = { pl.pos.x + 11.0f, pl.pos.y + 11.0f };
             if (screenShake > 0) {
                 finalTarget.x += GetRandomValue(-6, 6);

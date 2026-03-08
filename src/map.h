@@ -10,6 +10,11 @@ struct Obstacle {
     Vector2 pos;
     int type; // สำหรับเก็บ tileID
 };
+struct BlueprintPiece {
+    int offsetX;
+    int offsetY;
+    int type;
+};
 class Map {
 public:
     static const int tileSize = 32;
@@ -17,7 +22,6 @@ public:
     
     std::vector<Obstacle> obstacles; // เก็บสิ่งกีดขวางแบบไดนามิก
 
-    Map();
     void LoadAssets();
     void UnloadAssets();
 
