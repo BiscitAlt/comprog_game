@@ -57,6 +57,11 @@ int main()
     InitWindow(screenWidth, screenHeight, "Hell project");
     SetTargetFPS(60); 
 
+    // ===== Load Weapon Textures =====
+        fireStaffTex = LoadTexture("assets/weapons/fire_staff.png");
+        iceWandTex = LoadTexture("assets/weapons/ice_wand.png");
+        lightningRodTex = LoadTexture("assets/weapons/lightning_rod.png");
+
     enum GameState { STATE_MENU, STATE_PLAYING, STATE_GAMEOVER, STATE_PAUSED};
     GameState currentState = STATE_MENU; 
 
@@ -481,12 +486,12 @@ if (!enemies.empty())
 
                 // projectiles
                 DrawSwordWaves(swordWaves);
-                DrawMagicProjectiles(magicProjectiles);
+               DrawMagicProjectiles(magicProjectiles);
 
                 for(const Bullet& b : bullets)
-{
-                DrawBullet(b);
-}
+                {
+                    DrawBullet(b);
+                }
                 DrawBulletExplosions();
             EndMode2D();
 
@@ -529,6 +534,10 @@ if (!enemies.empty())
 
     // ปิดหน้าต่างและคืนค่าทรัพยากร
     gridMap.UnloadAssets();
+
+    UnloadTexture(fireStaffTex);
+    UnloadTexture(iceWandTex);
+    UnloadTexture(lightningRodTex);
     UnloadTexture(lobbygame);
     CloseWindow();
     return 0;

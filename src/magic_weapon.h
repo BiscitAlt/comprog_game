@@ -23,6 +23,12 @@ struct MagicWeapon
     float cooldownTimer;
 };
 
+
+// ===== Texture ของอาวุธ =====
+extern Texture2D fireStaffTex;
+extern Texture2D iceWandTex;
+extern Texture2D lightningRodTex;
+
 // ===== Function =====
 void InitMagicWeapon(
     MagicWeapon& m,
