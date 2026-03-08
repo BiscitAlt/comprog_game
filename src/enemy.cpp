@@ -32,12 +32,12 @@ void InitEnemy(Enemy& e, Vector2 pos, EnemyType type)
         break;
 
         case POISON:
-            e.hp = 40;
-            e.speed = 1.1f;
+            e.hp = 120;
+            e.speed = 1.2f;
             e.color = GREEN;
             e.atk = 2;
 
-            e.poisonRadius = 80;
+            e.poisonRadius = 150;
             e.poisonInterval = 0.5f;
             e.poisonTimer = 0;
         break;
@@ -160,8 +160,9 @@ void UpdateEnemy(Enemy& e, Vector2 playerPos)
 
         if(e.poisonActive)
             e.poisonTimer += delta;
-    }
+    } 
 }
+
 
 void DrawEnemy(const Enemy& e)
 {
