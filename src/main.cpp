@@ -215,7 +215,6 @@ if (!enemies.empty())
 
             for (int i = enemies.size() - 1; i >= 0; i--) {
                 UpdateEnemy(enemies[i], pl.pos);
-                UpdateEnemy(enemies[i], pl.pos);
                 // ===== POISON DAMAGE =====
                 if (enemies[i].type == POISON && enemies[i].poisonActive)
                 {
@@ -226,7 +225,27 @@ if (!enemies.empty())
 
                     screenShake = 0.15f;
                 }
-                }   
+                 
+                
+                }// ===== ENEMY BULLET HIT PLAYER =====
+                for (auto& b : enemies[i].bullets)
+                {
+                if (!b.active) continue;
+
+                 Rectangle playerRect = {pl.pos.x, pl.pos.y, pl.size.x, pl.size.y};
+
+                 if (CheckCollisionCircleRec(b.pos, b.radius, playerRect))
+                {
+                    if (plInvincTimer <= 0)
+                {
+                 pl.hp -= enemies[i].atk;
+                 plInvincTimer = 0.4f;
+                 screenShake = 0.2f;
+                             }
+
+                 b.active = false;
+                    }
+                }
                 if (enemies[i].hp <= 0) {
                     gems.push_back({ enemies[i].pos, 2, true });
                     enemies.erase(enemies.begin() + i);
