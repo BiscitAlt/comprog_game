@@ -15,7 +15,7 @@ void InitEnemy(Enemy& e, Vector2 pos, EnemyType type)
     {
         case MELEE:
             e.hp = 100;
-            e.speed = 1.3f;
+            e.speed = 1.4f;
             e.color = BLUE;
             e.atk = 10;
         break;
@@ -33,9 +33,9 @@ void InitEnemy(Enemy& e, Vector2 pos, EnemyType type)
 
         case POISON:
             e.hp = 120;
-            e.speed = 1.2f;
+            e.speed = 1.4f;
             e.color = GREEN;
-            e.atk = 2;
+            e.atk = 1;
 
             e.poisonRadius = 150;
             e.poisonInterval = 0.5f;
