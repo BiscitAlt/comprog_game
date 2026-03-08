@@ -1,35 +1,32 @@
 #ifndef MAP_H
 #define MAP_H
 
-// รวม header ไม่ใส่ใน .cpp เพราะจะได้ไม่ต้อง include ซ้ำหลายๆ ที่
 #include "raylib.h"
-#include <map>
 #include <vector>
-struct RoomData {
-    int data[30][30]; // ขนาดเดียวกับ Map ของคุณ (สมมติว่าเป็น rows/cols ของคุณ)
+#include <cmath>
+
+// สร้าง Struct เก็บข้อมูลสิ่งกีดขวางแต่ละชิ้น
+struct Obstacle {
+    Vector2 pos;
+    int type; // สำหรับเก็บ tileID
 };
 class Map {
 public:
-    int currentRoomX = 0;
-    int currentRoomY = 0;
-    std::map<std::pair<int, int>, RoomData> visitedRooms; // เก็บห้องที่เคยไปมาแล้ว
-
-    static const int rows = 30;
-    static const int cols = 30;
-    static const int tileSize = 32; // ขนาดต่อ 1 ช่อง
-    int maxObstacles = 5; // จำนวนกล่องสุ่มในแมพ (ปรับได้ตามต้องการ)
-    
-    int data[rows][cols]; // แมพข้อมูล (0 = พื้น, 1 = กำแพง)
+    static const int tileSize = 32;
     Texture2D tileset;
+    
+    std::vector<Obstacle> obstacles; // เก็บสิ่งกีดขวางแบบไดนามิก
 
-    Map();      // Constructor (ใช้ตั้งค่าแมพตอนเริ่มเกม)
+    Map();
+    void LoadAssets();
+    void UnloadAssets();
 
-    void LoadAssets();   // โหลดรูปภาพ (เรียกครั้งเดียวตอนเริ่มเกม)
-    void UnloadAssets(); // คืน Memory (เรียกตอนปิดเกม)
-
-    void GenerateNewRoom(); // สร้างแมพใหม่ (กำแพงรอบนอก + พื้นข้างใน + กล่องสุ่ม)
-    bool IsWall(float x, float y); // ฟังก์ชันเช็คว่าตำแหน่ง (x, y) เป็นกำแพงหรือไม่
-    void Draw(); // ฟังก์ชันวาดแมพ
+    // ฟังก์ชันใหม่สำหรับอัปเดต Endless Map
+    void UpdateEndless(Vector2 playerPos); 
+    bool IsWall(float x, float y);
+    
+    // ต้องรับตำแหน่งผู้เล่นและหน้าจอมาเพื่อวาดพื้นให้พอดีกล้อง
+    void Draw(Vector2 playerPos, int screenWidth, int screenHeight); 
 };
 
 #endif
