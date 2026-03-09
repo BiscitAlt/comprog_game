@@ -136,7 +136,7 @@ switch (gun.type)
     else
     {
         // วาดตอนถือ
-        float scale = 0.05f;
+        float scale = 0.03f;
 
 float angle = atan2f(dir.y, dir.x) * RAD2DEG;
 

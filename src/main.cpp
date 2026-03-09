@@ -63,6 +63,9 @@ int main()
         lightningRodTex = LoadTexture("assets/weapons/lightning_rod.png");
         shotgunTex = LoadTexture("assets/weapons/shot_gun.png");
         magnumTex = LoadTexture("assets/weapons/mag_num.png");
+       spiritgrimoireTex = LoadTexture("assets/weapons/spirit_grimoire.png");
+       spiritorbTex = LoadTexture("assets/weapons/spirit_orb.png");
+        spiritswordTex = LoadTexture("assets/weapons/spirit_sword.png");
 
     enum GameState { STATE_MENU, STATE_PLAYING, STATE_GAMEOVER, STATE_PAUSED};
     GameState currentState = STATE_MENU; 
@@ -563,6 +566,9 @@ if (!enemies.empty())
     // ปิดหน้าต่างและคืนค่าทรัพยากร
     gridMap.UnloadAssets();
 
+    UnloadTexture(spiritgrimoireTex);
+    UnloadTexture(spiritorbTex);
+    UnloadTexture(spiritswordTex);
     UnloadTexture(shotgunTex);
     UnloadTexture(magnumTex);
     UnloadTexture(pl.texture);

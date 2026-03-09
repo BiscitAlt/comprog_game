@@ -6,6 +6,7 @@
 #include "raylib.h"
 #include <vector>
 
+
 // ================= SWORD TYPE =================
 enum SwordType
 {
@@ -14,6 +15,10 @@ enum SwordType
     SWORD_LIFESTEAL
 };
 
+    extern Texture2D spiritgrimoireTex;
+    extern Texture2D spiritorbTex;
+    extern Texture2D spiritswordTex;
+    
 // ================= SWORD WAVE =================
 struct SwordWave
 {
@@ -22,6 +27,7 @@ struct SwordWave
     float speed;
     int damage;
     bool active;
+    Texture2D tex;
 };
 
 // ================= SWORD =================
@@ -72,7 +78,7 @@ void UpdateSwordWaves(
 );
 
 void DrawSword(
-    Sword& s,
+   const Sword& s,
     Vector2 plPos,
     Vector2 plSize,
     Vector2 dir
