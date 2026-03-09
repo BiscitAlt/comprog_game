@@ -9,7 +9,7 @@
                 "-g",
                 "${workspaceFolder}/src/*.cpp",
                 "-o",
-                "${workspaceFolder}\\game.exe",
+                "${workspaceFolder}\\src\\game.exe",
                 "-I",
                 "${workspaceFolder}\\lib\\include",
                 "-L",
