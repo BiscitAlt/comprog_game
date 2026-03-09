@@ -57,11 +57,45 @@ int main()
     InitWindow(screenWidth, screenHeight, "Hell project");
     SetTargetFPS(60); 
 
+    // ===== Load Weapon Textures =====
+        fireStaffTex = LoadTexture("assets/weapons/fire_staff.png");
+        iceWandTex = LoadTexture("assets/weapons/ice_wand.png");
+        lightningRodTex = LoadTexture("assets/weapons/lightning_rod.png");
+        shotgunTex = LoadTexture("assets/weapons/shot_gun.png");
+        magnumTex = LoadTexture("assets/weapons/mag_num.png");
+       spiritgrimoireTex = LoadTexture("assets/weapons/spirit_grimoire.png");
+       spiritorbTex = LoadTexture("assets/weapons/spirit_orb.png");
+        spiritswordTex = LoadTexture("assets/weapons/spirit_sword.png");
+
     enum GameState { STATE_MENU, STATE_PLAYING, STATE_GAMEOVER, STATE_PAUSED};
     GameState currentState = STATE_MENU; 
 
     Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
-    player pl ={plPos,{22.0f,22.0f},2.4f,RED,"Hero",50,50,100,100,10,1,0,10,{}};
+    player pl;
+
+    pl.pos = plPos;
+    pl.size = {22.0f,22.0f};
+    pl.speed = 2.4f;
+    pl.color = RED;
+
+    pl.name = "Hero";
+
+    pl.hp = 50;
+    pl.hpMax = 50;
+
+    pl.mana = 100;
+    pl.manaMax = 100;
+
+    pl.attack = 10;
+
+    pl.level = 1;
+    pl.exp = 0;
+    pl.expNext = 10;
+    pl.texture = LoadTexture("assets/player_walk.png");
+    pl.frame = 0;
+    pl.direction = 0;
+    pl.frameTime = 0;
+    pl.faceRight = true;
 
     SkillState skills = {};
     skills.voidMeteorTimer = -9999;
@@ -148,8 +182,8 @@ int main()
 }
 
             float scale = 0.2f * GetMouseWheelMove();
-            camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 1.0f, 1.8f);
-            Vector2 finalTarget = { pl.pos.x + 11.0f, pl.pos.y + 11.0f };
+            camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.8f, 1.4f);
+            Vector2 finalTarget = pl.pos;
             if (screenShake > 0) {
                 finalTarget.x += GetRandomValue(-6, 6);
                 finalTarget.y += GetRandomValue(-6, 6);
@@ -215,7 +249,6 @@ if (!enemies.empty())
 
             for (int i = enemies.size() - 1; i >= 0; i--) {
                 UpdateEnemy(enemies[i], pl.pos);
-                UpdateEnemy(enemies[i], pl.pos);
                 // ===== POISON DAMAGE =====
                 if (enemies[i].type == POISON && enemies[i].poisonActive)
                 {
@@ -226,7 +259,27 @@ if (!enemies.empty())
 
                     screenShake = 0.15f;
                 }
-                }   
+                 
+                
+                }// ===== ENEMY BULLET HIT PLAYER =====
+                for (auto& b : enemies[i].bullets)
+                {
+                if (!b.active) continue;
+
+                 Rectangle playerRect = {pl.pos.x, pl.pos.y, pl.size.x, pl.size.y};
+
+                 if (CheckCollisionCircleRec(b.pos, b.radius, playerRect))
+                {
+                    if (plInvincTimer <= 0)
+                {
+                 pl.hp -= enemies[i].atk;
+                 plInvincTimer = 0.4f;
+                 screenShake = 0.2f;
+                             }
+
+                 b.active = false;
+                    }
+                }
                 if (enemies[i].hp <= 0) {
                     gems.push_back({ enemies[i].pos, 2, true });
                     enemies.erase(enemies.begin() + i);
@@ -364,12 +417,14 @@ if (!enemies.empty())
                     InitGun(gun, pl.pos, GunType::SHOTGUN);
                     gun.pickedUp = true;
                     currentWeapon = WEAPON_GUN;
+                   
                     break;
 
                 case START_ROCKET:
                     InitGun(gun, pl.pos, GunType::ROCKET);
                     gun.pickedUp = true;
                     currentWeapon = WEAPON_GUN;
+                   
                     break;
 
                 case START_SWORD_ENERGY:
@@ -449,7 +504,7 @@ if (!enemies.empty())
                     DrawCircleLines(pl.pos.x + 11, pl.pos.y + 11, 40, Fade(PURPLE, 0.6f));
                 }
                 
-                if (plInvincTimer <= 0 || (int)(GetTime()*15)%2 == 0) DrawRectangleV(pl.pos, pl.size, pl.color); 
+                if (plInvincTimer <= 0 || (int)(GetTime()*15)%2 == 0) DrawPlayer(pl); 
                 
                 for (const Enemy& e : enemies) { 
                     if(e.hp > 0) DrawEnemy(e);    
@@ -473,12 +528,12 @@ if (!enemies.empty())
 
                 // projectiles
                 DrawSwordWaves(swordWaves);
-                DrawMagicProjectiles(magicProjectiles);
+               DrawMagicProjectiles(magicProjectiles);
 
                 for(const Bullet& b : bullets)
-{
-                DrawBullet(b);
-}
+                {
+                    DrawBullet(b);
+                }
                 DrawBulletExplosions();
             EndMode2D();
 
@@ -521,6 +576,16 @@ if (!enemies.empty())
 
     // ปิดหน้าต่างและคืนค่าทรัพยากร
     worldMap.UnloadAssets();
+
+    UnloadTexture(spiritgrimoireTex);
+    UnloadTexture(spiritorbTex);
+    UnloadTexture(spiritswordTex);
+    UnloadTexture(shotgunTex);
+    UnloadTexture(magnumTex);
+    UnloadTexture(pl.texture);
+    UnloadTexture(fireStaffTex);
+    UnloadTexture(iceWandTex);
+    UnloadTexture(lightningRodTex);
     UnloadTexture(lobbygame);
     CloseWindow();
     return 0;

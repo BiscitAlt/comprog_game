@@ -33,11 +33,11 @@ void InitEnemy(Enemy& e, Vector2 pos, EnemyType type)
 
         case POISON:
             e.hp = 120;
-            e.speed = 1.4f;
+            e.speed = 1.3f;
             e.color = GREEN;
             e.atk = 1;
 
-            e.poisonRadius = 150;
+            e.poisonRadius = 120;
             e.poisonInterval = 0.5f;
             e.poisonTimer = 0;
         break;

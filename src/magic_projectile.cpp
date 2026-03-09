@@ -82,7 +82,7 @@ void UpdateMagicProjectiles(
                     // ===== ครบ 3 stack ระเบิด =====
                     if (e.iceStack >= 3)
                         {
-                        e.hp -= -35; // 3 stack boom
+                        e.hp -= 35; // 3 stack boom
                         float explosionRadius = 80.0f;
 
                     for (auto& other : enemies)

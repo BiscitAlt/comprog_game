@@ -4,6 +4,12 @@
 // =======================
 // INIT
 // =======================
+
+// ===== Texture ของอาวุธ =====
+Texture2D fireStaffTex;
+Texture2D iceWandTex;
+Texture2D lightningRodTex;
+
 void InitMagicWeapon(
     MagicWeapon& m,
     Vector2 pos,
@@ -118,34 +124,37 @@ void DrawMagicWeapon(
     Vector2 dir
 )
 {
-    Color c = PURPLE;
+    Texture2D tex;
 
-    switch (m.type)
-    {
-        case FIRE_STAFF:
-            c = ORANGE;
-            break;
-        case ICE_WAND:
-            c = SKYBLUE;
-            break;
-        case LIGHTNING_ROD:
-            c = YELLOW;
-            break;
-    }
+switch (m.type)
+{
+    case FIRE_STAFF:
+        tex = fireStaffTex;
+        break;
+    case ICE_WAND:
+        tex = iceWandTex;
+        break;
+    case LIGHTNING_ROD:
+        tex = lightningRodTex;
+        break;
+}
 
     if (!m.pickedUp)
     {
-        // วาดตอนตกพื้น
-        DrawCircleV(m.pos, 10, c);
+        DrawTexture(tex, m.pos.x, m.pos.y, WHITE);
     }
     else
-    {
-        // วาดตอนถือ
-        Vector2 drawPos = Vector2Add(
-            playerPos,
-            Vector2Scale(dir, 18)
-        );
+                 {
+    
+    
+              // วาดตอนถือ
+                  float scale = 0.05f;
 
-        DrawCircleV(drawPos, 6, c);
-    }
+              Vector2 drawPos = {
+              playerPos.x + dir.x * 18 - (tex.width * 0.05f)/2,
+              playerPos.y + dir.y * 18 - (tex.height * 0.05f)/2
+            };
+
+             DrawTextureEx(tex, drawPos, 0.0f, scale, WHITE);
+             }
 }

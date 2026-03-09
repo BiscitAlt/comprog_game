@@ -29,6 +29,13 @@ struct player
 
     std::string name;
 
+    // ===== Animation =====
+    Texture2D texture;
+    int frame;
+    int direction;
+    float frameTime;
+    bool faceRight;
+
     // ===== HP =====
     int hp;
     int hpMax;
@@ -40,12 +47,12 @@ struct player
     // ===== Combat =====
     int attack;
 
-    // ===== RPG System =====
+    // ===== RPG =====
     int level;
     int exp;
     int expNext;
 
-    // ===== Skill List =====
+    // ===== Skills =====
     std::vector<Skill> skillList;
 };
 
@@ -55,7 +62,7 @@ struct player
 
 void plUpdate(player &pl, Map &map);
 
-void plMovement(Vector2 &plPos, float speed);
+void plMovement(player &pl);
 
 void DrawPlayer(player &pl);
 

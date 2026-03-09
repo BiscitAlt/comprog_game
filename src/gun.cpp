@@ -1,6 +1,10 @@
 #include "gun.h"
 #include "raymath.h"
 
+
+Texture2D magnumTex;
+Texture2D shotgunTex;
+
 void InitGun(Gun& gun, Vector2 pos, GunType type)
 {
     gun.pos = pos;
@@ -106,22 +110,55 @@ void ShootGun(Gun& gun,
     }
 }
 
-void DrawGun(const Gun& gun,
+        void DrawGun(
+            const Gun& gun,
              Vector2 plPos,
              Vector2 plSize,
              Vector2 dir)
 {
+    Texture2D tex;
+
+switch (gun.type)
+{
+    case GunType::SHOTGUN:
+        tex = shotgunTex;
+        break;
+    case GunType::ROCKET:
+        tex = magnumTex;
+        break;
+    
+}
+
     if (!gun.pickedUp)
     {
-        DrawRectangleV(gun.pos, gun.size, DARKGRAY);
-        return;
+        DrawTexture(tex, gun.pos.x, gun.pos.y, WHITE);
     }
+    else
+    {
+        // วาดตอนถือ
+        float scale = 0.03f;
 
-    Vector2 center = {
-        plPos.x + plSize.x / 2,
-        plPos.y + plSize.y / 2
-    };
+float angle = atan2f(dir.y, dir.x) * RAD2DEG;
 
-    Vector2 muzzle = Vector2Add(center, Vector2Scale(dir, 18));
-    DrawLineEx(center, muzzle, 4, BLACK);
+Vector2 center = {
+    plPos.x + plSize.x / 2,
+    plPos.y + plSize.y / 2
+};
+
+Rectangle source = {0, 0, (float)tex.width, (float)tex.height};
+
+Rectangle dest = {
+    center.x + dir.x * 18,
+    center.y + dir.y * 18,
+    tex.width * scale,
+    tex.height * scale
+};
+
+Vector2 origin = {
+    (tex.width * scale) / 2,
+    (tex.height * scale) / 2
+};
+
+DrawTexturePro(tex, source, dest, origin, angle, WHITE);
+    }
 }

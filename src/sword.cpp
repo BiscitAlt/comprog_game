@@ -2,6 +2,9 @@
 #include "raymath.h"
 #include <cmath>
 
+Texture2D spiritgrimoireTex;
+Texture2D spiritorbTex;
+Texture2D spiritswordTex;
 // ================= INIT =================
 void InitSword(Sword& s, Vector2 dropPos, SwordType type)
 {
@@ -224,34 +227,46 @@ void UpdateSwordWaves(
 }
 
 // ================= DRAW SWORD =================
-void DrawSword(Sword& s, Vector2 plPos, Vector2 plSize, Vector2 dir)
+void DrawSword(
+    const Sword& s,
+    Vector2 plPos,
+    Vector2 plSize,
+    Vector2 dir
+)
 {
-    if (!s.pickedUp)
+    Texture2D tex;
+
+    switch (s.type)
     {
-        Color c;
-
-        switch (s.type)
-{
-    case SWORD_ENERGY: c = SKYBLUE; break;
-    case SWORD_SPIN:   c = ORANGE;  break;
-    case SWORD_LIFESTEAL:  c = GREEN;     break;
-}
-
-        DrawRectangleV(s.pos, { 30, 10 }, c);
-
-        return;
+        case SWORD_ENERGY: tex = spiritswordTex; break;
+        case SWORD_SPIN: tex = spiritorbTex; break;
+        case SWORD_LIFESTEAL: tex = spiritgrimoireTex; break;
     }
 
-    Vector2 center = {
-        plPos.x + plSize.x / 2,
-        plPos.y + plSize.y / 2
-    };
+    if (!s.pickedUp)
+    {
+        DrawTexture(tex, s.pos.x, s.pos.y, WHITE);
+    }
+    else
+    {
+        float scale = 0.05f;
 
-    DrawCircleV(center, 5, BLACK);
+        Vector2 drawPos = {
+            plPos.x + dir.x * 18 - (tex.width * scale)/2,
+            plPos.y + dir.y * 18 - (tex.height * scale)/2
+        };
 
-    // ===== LIFESTEAL EFFECT (ต้องอยู่ตรงนี้) =====
+        DrawTextureEx(tex, drawPos, 0.0f, scale, WHITE);
+    }
+
+    // ===== LIFESTEAL EFFECT =====
     if (s.type == SWORD_LIFESTEAL && s.effectTimer > 0)
     {
+        Vector2 center = {
+            plPos.x + plSize.x / 2,
+            plPos.y + plSize.y / 2
+        };
+
         float progress = 1.0f - (s.effectTimer / s.effectDuration);
         float radius = 40 + progress * 30;
 
