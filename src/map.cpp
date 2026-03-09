@@ -1,23 +1,13 @@
 #include "map.h"
 
 // ============================================================
-// TileHash — pure position-based hash, NO global RNG state touched.
-//
-// Returns a stable pseudo-random unsigned int for any (x, y) pair.
-// Same input always gives the same output — safe to call every frame.
-//
-// Uses the Murmur3 finalizer mix: fast, good distribution, no collisions
-// in practice for tile coordinates.
-//
-// Usage:
-//   int variant = TileHash(tileX, tileY) % NUM_VARIANTS;
+// TileHash — stable per-position hash, never touches global RNG.
+// Uses Murmur3 finalizer mix for good distribution.
 // ============================================================
 static unsigned int TileHash(int x, int y) {
     unsigned int h = (unsigned int)(x * 2246822519u ^ y * 3266489917u);
-    h ^= h >> 16;
-    h *= 0x85ebca6bu;
-    h ^= h >> 13;
-    h *= 0xc2b2ae35u;
+    h ^= h >> 16; h *= 0x85ebca6bu;
+    h ^= h >> 13; h *= 0xc2b2ae35u;
     h ^= h >> 16;
     return h;
 }
@@ -46,75 +36,6 @@ void Map::LoadAssets() {
 
 void Map::UnloadAssets() {
     UnloadTexture(tileset);
-}
-
-// ============================================================
-// River helpers
-// ============================================================
-
-// Returns the world-space X centre of the ravine at tile row tileY.
-// Two sine waves layered together give a natural winding feel.
-float Map::GetRavineCenterX(int tileY) const {
-    float worldY = tileY * (float)tileSize;
-    return ravineBaseX
-         + 150.0f * sinf(worldY * 0.0020f)   // slow, wide bends
-         +  60.0f * sinf(worldY * 0.0051f);  // faster, tighter wiggles
-}
-
-// Returns true when this tile row is part of a walkable ford gap.
-bool Map::IsCrossingRow(int tileY) const {
-    // Normalise to positive so modulo works for negative tileY too
-    int n     = ((tileY % CROSSING_EVERY) + CROSSING_EVERY) % CROSSING_EVERY;
-    int start = (CROSSING_EVERY - CROSSING_WIDTH) / 2;
-    return (n >= start && n < start + CROSSING_WIDTH);
-}
-
-// True when the tile at (tileX, tileY) is a blocking abyss tile.
-bool Map::IsRavineTile(int tileX, int tileY) const {
-    if (IsCrossingRow(tileY)) return false; // ledge rows are always walkable
-
-    float centerWorldX = GetRavineCenterX(tileY);
-    int   centerTileX  = (int)floorf(centerWorldX / (float)tileSize);
-    int   dist         = abs(tileX - centerTileX);
-
-    return (dist <= RAVINE_HALF_WIDTH);
-}
-
-// Returns a tint color that gets darker as you approach the abyss centre.
-//
-//   distFromCenter == RAVINE_HALF_WIDTH  →  cliff edge (dim floor color)
-//   distFromCenter == 0                  →  abyss centre (near black)
-//
-// The ravine is drawn by tinting the normal floor tile, so you don't need
-// any special tileset tiles for the abyss — it reuses tile ID 0.
-Color Map::GetRavineTint(int distFromCenter) const {
-    // Clamp to valid range
-    if (distFromCenter < 0)                   distFromCenter = 0;
-    if (distFromCenter > RAVINE_HALF_WIDTH)   distFromCenter = RAVINE_HALF_WIDTH;
-
-    // Brightness gradient: 0 (abyss) → very dark,  RAVINE_HALF_WIDTH (edge) → dim
-    // Adjust these RGB values to match your tileset's color palette.
-    //
-    //  dist 0 : {18,  12,  8,  255}  — near-black abyss
-    //  dist 1 : {45,  30, 20,  255}
-    //  dist 2 : {90,  60, 40,  255}
-    //  dist 3 : {145, 100, 70, 255}  — cliff edge (darkened floor)
-    //
-    static const Color gradient[] = {
-        {  18,  12,   8, 255 },  // dist 0 — deepest abyss
-        {  45,  30,  20, 255 },  // dist 1
-        {  90,  60,  40, 255 },  // dist 2
-        { 145, 100,  70, 255 },  // dist 3 — cliff rim
-        { 180, 140, 100, 255 },  // dist 4 (if you ever widen RAVINE_HALF_WIDTH)
-        { 210, 170, 130, 255 },  // dist 5
-        { 235, 200, 160, 255 },  // dist 6
-    };
-
-    // Safety: cap array access
-    int maxIdx = sizeof(gradient) / sizeof(gradient[0]) - 1;
-    if (distFromCenter > maxIdx) distFromCenter = maxIdx;
-
-    return gradient[distFromCenter];
 }
 
 // ============================================================
@@ -251,48 +172,9 @@ void Map::Draw(Vector2 playerPos, int screenWidth, int screenHeight) {
     for (int y = firstRow; y < firstRow + rowsToDraw; y++) {
         for (int x = firstCol; x < firstCol + colsToDraw; x++) {
             int tileIndex = (int)(TileHash(x, y) % FLOOR_VARIANTS);
-            
             Rectangle crop = {tileIndex * 16.0f, 0.0f, 16.0f, 16.0f};
             Rectangle dest = {(float)(x * tileSize), (float)(y * tileSize), (float)tileSize, (float)tileSize};
             DrawTexturePro(tileset, crop, dest, {0, 0}, 0.0f, WHITE);
-        }
-    }
-
-    // ---- 2. Ravine ----
-    //
-    // The ravine is drawn by re-rendering the floor tile on top of itself
-    // with a dark tint — no special tileset tiles needed.
-    //
-    // Layout per row (RAVINE_HALF_WIDTH = 3 as example):
-    //
-    //   dist:  3    2    1    0    1    2    3
-    //        [dim][drk][dkr][ABY][dkr][drk][dim]
-    //
-    // Crossing rows: the centre CROSSING_WIDTH tiles draw as normal floor (ledge).
-    //
-    for (int y = firstRow; y < firstRow + rowsToDraw; y++) {
-        float centerWorldX = GetRavineCenterX(y);
-        int   centerTileX  = (int)floorf(centerWorldX / (float)tileSize);
-        bool  isCrossing   = IsCrossingRow(y);
-
-        for (int dx = -RAVINE_HALF_WIDTH; dx <= RAVINE_HALF_WIDTH; dx++) {
-            int x    = centerTileX + dx;
-            int dist = abs(dx);
-
-            // On crossing rows, only the narrow centre ledge stays as floor;
-            // the rest of the ravine width still falls away into the abyss.
-            bool isLedge = isCrossing && (dist <= CROSSING_WIDTH / 2);
-
-            if (isLedge) continue; // floor tile already drawn in step 1 — nothing to do
-
-            // Reuse TileHash so the floor tile underneath the tint is identical to step 1
-            int tileIndex = (int)(TileHash(x, y) % FLOOR_VARIANTS);
-            Rectangle crop = {tileIndex * 16.0f, 0.0f, 16.0f, 16.0f};
-            Rectangle dest = {(float)(x * tileSize), (float)(y * tileSize), (float)tileSize, (float)tileSize};
-
-            // Tint gets darker toward centre
-            Color tint = GetRavineTint(dist);
-            DrawTexturePro(tileset, crop, dest, {0, 0}, 0.0f, tint);
         }
     }
 
@@ -317,12 +199,6 @@ bool Map::IsWall(float x, float y) {
         Rectangle obsRec = { obs.pos.x, obs.pos.y, (float)tileSize, (float)tileSize };
         if (CheckCollisionPointRec({x, y}, obsRec)) return true;
     }
-
-    // Check ravine (ford crossings are NOT walls)
-    int tileX = (int)floorf(x / (float)tileSize);
-    int tileY = (int)floorf(y / (float)tileSize);
-    if (IsRavineTile(tileX, tileY)) return true;
-
     return false;
 }
 

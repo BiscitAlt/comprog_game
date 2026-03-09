@@ -423,7 +423,6 @@ if (!enemies.empty())
                 // 4. เข้าเกม!
                 worldMap.obstacles.clear(); // เคลียร์สิ่งกีดขวางเก่า
                 worldMap.decorations.clear(); // เคลียร์ของตกแต่งเก่า
-                worldMap.ravineBaseX = pl.pos.x; // ให้เริ่มจากตำแหน่งผู้เล่น
                 currentState = STATE_PLAYING;
             }
 

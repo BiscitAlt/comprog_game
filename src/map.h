@@ -37,12 +37,6 @@ public:
     std::vector<Obstacle> obstacles; // เก็บสิ่งกีดขวาง
     std::vector<Decoration> decorations; // เก็บข้อมูลของตกแต่ง
 
-    // ตั้งค่า Ravine
-    float ravineBaseX = 0.0f;  // world-space X centre of the river
-    static constexpr int RAVINE_HALF_WIDTH = 2;   // river width in tiles
-    static constexpr int CROSSING_EVERY = 25;  // gap every N tile-rows
-    static constexpr int CROSSING_WIDTH = 4;   // gap width in tiles
-
     void LoadAssets();
     void UnloadAssets();
     void UpdateMap(Vector2 playerPos); 
@@ -50,14 +44,6 @@ public:
 
     bool IsWall(float x, float y);
     bool HitSpike(float x, float y);
-
-    // ----------------------------------------------------------
-    // Ravine helpers (deterministic — same input → same output)
-    // ----------------------------------------------------------
-    float GetRavineCenterX(int tileY) const; // winding centre X for a given tile row
-    bool  IsRavineTile(int tileX, int tileY) const;
-    bool  IsCrossingRow(int tileY) const;   // true = walkable ford gap
-    Color GetRavineTint(int distFromCenter) const; // darkness tint for a tile's distance from river centre
 };
 
 #endif
