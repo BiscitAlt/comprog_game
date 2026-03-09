@@ -9,7 +9,7 @@ void plUpdate(player &pl, Map &map)
     // เก็บตำแหน่งปัจจุบันไว้ก่อน หากเดินชนกำแพงจะได้เด้งกลับมาจุดนี้
     Vector2 oldPos = pl.pos; 
     
-    plMovement(pl.pos, pl.speed);
+    plMovement(pl);
 
     // เช็คไม่ให้หลุดขอบแผนที่
     plCollision(pl.pos, pl.size, pl.speed, map);
@@ -29,12 +29,53 @@ void plUpdate(player &pl, Map &map)
 // ======================
 // Movement
 // ======================
-void plMovement(Vector2 &plPos, float speed)
+void plMovement(player &pl)
 {
-    if (IsKeyDown(KEY_W)) plPos.y -= speed;
-    if (IsKeyDown(KEY_S)) plPos.y += speed;
-    if (IsKeyDown(KEY_A)) plPos.x -= speed;
-    if (IsKeyDown(KEY_D)) plPos.x += speed;
+    bool moving = false;
+
+    if (IsKeyDown(KEY_W))
+    {
+        pl.pos.y -= pl.speed;
+        moving = true;
+    }
+
+    if (IsKeyDown(KEY_S))
+    {
+        pl.pos.y += pl.speed;
+        moving = true;
+    }
+
+    if (IsKeyDown(KEY_A))
+{
+    pl.pos.x -= pl.speed;
+    pl.faceRight = false;   // หันซ้าย
+    moving = true;
+}
+
+if (IsKeyDown(KEY_D))
+{
+    pl.pos.x += pl.speed;
+    pl.faceRight = true;    // หันขวา
+    moving = true;
+}
+
+    if (moving)
+    {
+        pl.frameTime += GetFrameTime();
+
+        if (pl.frameTime >= 0.15f)
+        {
+            pl.frame++;
+            pl.frameTime = 0;
+
+            if (pl.frame > 3)
+                pl.frame = 0;
+        }
+    }
+    else
+    {
+        pl.frame = 0;
+    }
 }
 
 // ======================
@@ -63,5 +104,35 @@ void plCollision(Vector2 &plPos, Vector2 plSize, float plSpeed, Map &map)
 // ======================
 void DrawPlayer(player &pl)
 {
-    DrawRectangleV(pl.pos, pl.size, pl.color);
+    int frameWidth = pl.texture.width / 4;
+    int frameHeight = pl.texture.height;
+
+    float scale = 0.125f;
+
+    Rectangle source =
+    {
+        (float)pl.frame * frameWidth,
+        0,
+        (float)frameWidth,
+        (float)frameHeight
+    };
+
+    if (!pl.faceRight)
+        source.width = -frameWidth; // flip ซ้าย
+
+    Rectangle dest =
+    {
+        pl.pos.x,
+        pl.pos.y,
+        frameWidth * scale,
+        frameHeight * scale
+    };
+
+    Vector2 origin =
+    {
+        frameWidth * scale / 2.0f,
+        frameHeight * scale / 2.0f
+    };
+
+    DrawTexturePro(pl.texture, source, dest, origin, 0.0f, WHITE);
 }

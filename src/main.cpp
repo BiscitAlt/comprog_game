@@ -68,7 +68,31 @@ int main()
     GameState currentState = STATE_MENU; 
 
     Vector2 plPos = { screenWidth / 2.0f, screenHeight / 2.0f };
-    player pl ={plPos,{22.0f,22.0f},2.4f,RED,"Hero",50,50,100,100,10,1,0,10,{}};
+    player pl;
+
+    pl.pos = plPos;
+    pl.size = {22.0f,22.0f};
+    pl.speed = 2.4f;
+    pl.color = RED;
+
+    pl.name = "Hero";
+
+    pl.hp = 50;
+    pl.hpMax = 50;
+
+    pl.mana = 100;
+    pl.manaMax = 100;
+
+    pl.attack = 10;
+
+    pl.level = 1;
+    pl.exp = 0;
+    pl.expNext = 10;
+    pl.texture = LoadTexture("assets/player_walk.png");
+    pl.frame = 0;
+    pl.direction = 0;
+    pl.frameTime = 0;
+    pl.faceRight = true;
 
     SkillState skills = {};
     skills.voidMeteorTimer = -9999;
@@ -156,7 +180,7 @@ int main()
 
             float scale = 0.2f * GetMouseWheelMove();
             camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.8f, 1.4f);
-            Vector2 finalTarget = { pl.pos.x + 11.0f, pl.pos.y + 11.0f };
+            Vector2 finalTarget = pl.pos;
             if (screenShake > 0) {
                 finalTarget.x += GetRandomValue(-6, 6);
                 finalTarget.y += GetRandomValue(-6, 6);
@@ -466,7 +490,7 @@ if (!enemies.empty())
                     DrawCircleLines(pl.pos.x + 11, pl.pos.y + 11, 40, Fade(PURPLE, 0.6f));
                 }
                 
-                if (plInvincTimer <= 0 || (int)(GetTime()*15)%2 == 0) DrawRectangleV(pl.pos, pl.size, pl.color); 
+                if (plInvincTimer <= 0 || (int)(GetTime()*15)%2 == 0) DrawPlayer(pl); 
                 
                 for (const Enemy& e : enemies) { 
                     if(e.hp > 0) DrawEnemy(e);    
@@ -541,6 +565,7 @@ if (!enemies.empty())
 
     UnloadTexture(shotgunTex);
     UnloadTexture(magnumTex);
+    UnloadTexture(pl.texture);
     UnloadTexture(fireStaffTex);
     UnloadTexture(iceWandTex);
     UnloadTexture(lightningRodTex);
