@@ -42,6 +42,17 @@ struct Enemy
 
     float attackTimer;
 
+    Texture2D texture;
+
+    Rectangle frameRec;
+
+    int frameCount;
+    int currentFrame;
+    float frameTimer;
+    float frameSpeed;
+
+   
+
     // ===================
     // RANGED
     // ===================

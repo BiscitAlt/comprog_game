@@ -67,6 +67,12 @@ int main()
        spiritorbTex = LoadTexture("assets/weapons/spirit_orb.png");
         spiritswordTex = LoadTexture("assets/weapons/spirit_sword.png");
 
+        // ===== Load Monster Textures =====
+        Texture2D slimeTex = LoadTexture("assets/monster/slime.png");
+        Texture2D goblinTex = LoadTexture("assets/monster/goblin.png");
+        Texture2D poisonTex = LoadTexture("assets/monster/poison.png");
+        Texture2D bombTex = LoadTexture("assets/monster/bomb.png");
+
     enum GameState { STATE_MENU, STATE_PLAYING, STATE_GAMEOVER, STATE_PAUSED};
     GameState currentState = STATE_MENU; 
 
@@ -566,6 +572,10 @@ if (!enemies.empty())
     // ปิดหน้าต่างและคืนค่าทรัพยากร
     gridMap.UnloadAssets();
 
+    for (auto& e : enemies)
+    {
+    UnloadTexture(e.texture);
+    }
     UnloadTexture(spiritgrimoireTex);
     UnloadTexture(spiritorbTex);
     UnloadTexture(spiritswordTex);

@@ -5,52 +5,108 @@
 void InitEnemy(Enemy& e, Vector2 pos, EnemyType type)
 {
     e.pos = pos;
-    e.size = {22,22};
+   
     e.type = type;
+
+    e.currentFrame = 0;
+    e.frameTimer = 0;
     e.attackTimer = 0;
     e.bullets.clear();
     e.namemonster = "Monster";
+    float scale = 1.0f;
 
     switch(type)
-    {
-        case MELEE:
-            e.hp = 100;
-            e.speed = 1.4f;
-            e.color = BLUE;
-            e.atk = 10;
-        break;
+{
+    case MELEE:
 
-        case RANGED:
-            e.hp = 50;
-            e.speed = 0.8f;
-            e.color = ORANGE;
-            e.atk = 5;
+        e.texture = LoadTexture("assets/monster/slime.png");
+        SetTextureFilter(e.texture, TEXTURE_FILTER_POINT);
+        
+        scale = 0.2f;   // slime
 
-            e.shootCooldown = 1.8f;
-            e.shootRange = 350;
-            e.shootTimer = 0;
-        break;
+        e.hp = 100;
+        e.speed = 1.4f;
+        e.atk = 10;
 
-        case POISON:
-            e.hp = 120;
-            e.speed = 1.3f;
-            e.color = GREEN;
-            e.atk = 1;
+        e.frameCount = 9;
+        e.frameSpeed = 0.05f;
 
-            e.poisonRadius = 120;
-            e.poisonInterval = 0.5f;
-            e.poisonTimer = 0;
-        break;
+    break;
 
-        case EXPLODER:
-            e.hp =20;
-            e.speed = 1.8f;
-            e.color = YELLOW;
-            e.atk = 45;
+    case RANGED:
 
-            e.explodeRadius = 110;
-        break;
+        e.texture = LoadTexture("assets/monster/goblin.png");
+        SetTextureFilter(e.texture, TEXTURE_FILTER_POINT);
+
+        scale = 0.12f;   // goblin
+
+        e.hp = 50;
+        e.speed = 0.8f;
+        e.atk = 5;
+
+        e.frameCount = 8;
+        e.frameSpeed = 0.10f;
+
+        e.shootCooldown = 1.8f;
+        e.shootRange = 350;
+        e.shootTimer = 0;
+
+    break;
+
+    case POISON:
+
+        e.texture = LoadTexture("assets/monster/poison.png");
+        SetTextureFilter(e.texture, TEXTURE_FILTER_POINT);
+
+        scale = 0.15f;   // poison monster
+
+        e.hp = 120;
+        e.speed = 1.3f;
+        e.atk = 1;
+
+        e.frameCount = 4;
+        e.frameSpeed = 0.18f;
+
+        e.poisonRadius = 120;
+        e.poisonInterval = 0.5f;
+        e.poisonTimer = 0;
+
+    break;
+
+    case EXPLODER:
+
+        e.texture = LoadTexture("assets/monster/bomb.png");
+        SetTextureFilter(e.texture, TEXTURE_FILTER_POINT);
+
+        scale = 0.18f;   // bomb
+
+        e.hp = 20;
+        e.speed = 1.8f;
+        e.atk = 45;
+
+        e.frameCount = 5;
+        e.frameSpeed = 0.10f;
+
+        e.explodeRadius = 110;
+
+    break;
     }
+
+    int frameWidth = e.texture.width / e.frameCount;
+
+    e.size =
+    {
+    frameWidth * scale,
+    e.texture.height * scale
+    };
+
+    e.frameRec =
+    {
+    0,
+    0,
+    (float)frameWidth,
+    (float)e.texture.height
+    };
 
     e.hpMax = e.hp;
 }
@@ -83,6 +139,20 @@ void UpdateEnemy(Enemy& e, Vector2 playerPos)
     Vector2 dir = Vector2Subtract(playerPos, e.pos);
     float dist = Vector2Length(dir);
 
+    e.frameTimer += GetFrameTime();
+
+if (e.frameTimer >= e.frameSpeed)
+{
+    e.frameTimer = 0;
+    e.currentFrame++;
+
+    if (e.currentFrame >= e.frameCount)
+{
+    e.currentFrame = 0;
+}
+
+e.frameRec.x = e.currentFrame * e.frameRec.width;
+}
     if(e.type == RANGED && dist < 200)
     {
         if(dist > 1)
@@ -161,6 +231,7 @@ void UpdateEnemy(Enemy& e, Vector2 playerPos)
         if(e.poisonActive)
             e.poisonTimer += delta;
     } 
+    
 }
 
 
@@ -173,7 +244,22 @@ void DrawEnemy(const Enemy& e)
     if(e.type == EXPLODER && ((int)(GetTime()*10)%2==0))
         c = RED;
 
-    DrawRectangleV(e.pos, e.size, c);
+    Rectangle dest =
+{
+    e.pos.x,
+    e.pos.y,
+    e.size.x,
+    e.size.y
+};
+
+DrawTexturePro(
+    e.texture,
+    e.frameRec,
+    dest,
+    {0,0},
+    0,
+    WHITE
+);
 
     DrawRectangle(e.pos.x, e.pos.y - 10, e.size.x, 5, RED);
 
