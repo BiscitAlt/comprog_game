@@ -82,7 +82,7 @@ void InitEnemy(Enemy& e, Vector2 pos, EnemyType type)
 
         e.hp = 20;
         e.speed = 1.8f;
-        e.atk = 45;
+        e.atk = 30;
 
         e.frameCount = 4;
         e.frameSpeed = 0.10f;

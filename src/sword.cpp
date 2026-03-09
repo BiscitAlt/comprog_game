@@ -21,21 +21,21 @@ void InitSword(Sword& s, Vector2 dropPos, SwordType type)
     {
         case SWORD_ENERGY:
             s.cooldown = 0.5f;
-            s.damage = 20;
+            s.damage = 25;
             s.manaCost = 0;
             break;
 
         case SWORD_SPIN:
             s.cooldown = 1.0f;
-            s.damage = 22;
+            s.damage = 35;
             s.spinRadius = 80;
             s.manaCost = 0;
             break;
 
         case SWORD_LIFESTEAL:
             s.cooldown = 0.6f;
-            s.damage = 6;              // ดาเมจเบา
-            s.lifeStealPercent = 0.4f;  // ดูด 40% ของดาเมจ
+            s.damage = 10;              // ดาเมจเบา
+            s.lifeStealPercent = 0.2f;  // ดูด 40% ของดาเมจ
             s.manaCost = 0;
             break;
     }
