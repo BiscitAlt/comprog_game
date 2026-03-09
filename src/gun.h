@@ -9,7 +9,10 @@ enum class GunType
     ROCKET
 };
 
-struct Gun
+    extern Texture2D magnumTex;
+    extern Texture2D shotgunTex;
+
+    struct Gun
 {
     Vector2 pos;
     Vector2 size;
@@ -20,7 +23,7 @@ struct Gun
     float fireRate;
     float fireTimer;
     float bulletSpeed;
-
+    Texture2D tex;
 };
 
 void InitGun(Gun& gun, Vector2 pos, GunType type);

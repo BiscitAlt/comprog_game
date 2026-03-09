@@ -144,15 +144,17 @@ switch (m.type)
         DrawTexture(tex, m.pos.x, m.pos.y, WHITE);
     }
     else
-    {
-        // วาดตอนถือ
-        float scale = 0.05f;
+                 {
+    
+    
+              // วาดตอนถือ
+                  float scale = 0.05f;
 
-        Vector2 drawPos = {
-        playerPos.x + dir.x * 18 - (tex.width * 0.05f)/2,
-        playerPos.y + dir.y * 18 - (tex.height * 0.05f)/2
-};
+              Vector2 drawPos = {
+              playerPos.x + dir.x * 18 - (tex.width * 0.05f)/2,
+              playerPos.y + dir.y * 18 - (tex.height * 0.05f)/2
+            };
 
-        DrawTextureEx(tex, drawPos, 0.0f, scale, WHITE);
-    }
+             DrawTextureEx(tex, drawPos, 0.0f, scale, WHITE);
+             }
 }

@@ -61,6 +61,8 @@ int main()
         fireStaffTex = LoadTexture("assets/weapons/fire_staff.png");
         iceWandTex = LoadTexture("assets/weapons/ice_wand.png");
         lightningRodTex = LoadTexture("assets/weapons/lightning_rod.png");
+        shotgunTex = LoadTexture("assets/weapons/shot_gun.png");
+        magnumTex = LoadTexture("assets/weapons/mag_num.png");
 
     enum GameState { STATE_MENU, STATE_PLAYING, STATE_GAMEOVER, STATE_PAUSED};
     GameState currentState = STATE_MENU; 
@@ -380,12 +382,14 @@ if (!enemies.empty())
                     InitGun(gun, pl.pos, GunType::SHOTGUN);
                     gun.pickedUp = true;
                     currentWeapon = WEAPON_GUN;
+                   
                     break;
 
                 case START_ROCKET:
                     InitGun(gun, pl.pos, GunType::ROCKET);
                     gun.pickedUp = true;
                     currentWeapon = WEAPON_GUN;
+                   
                     break;
 
                 case START_SWORD_ENERGY:
@@ -535,6 +539,8 @@ if (!enemies.empty())
     // ปิดหน้าต่างและคืนค่าทรัพยากร
     gridMap.UnloadAssets();
 
+    UnloadTexture(shotgunTex);
+    UnloadTexture(magnumTex);
     UnloadTexture(fireStaffTex);
     UnloadTexture(iceWandTex);
     UnloadTexture(lightningRodTex);
