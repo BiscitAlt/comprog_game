@@ -94,8 +94,8 @@ int main()
     WeaponType currentWeapon = WEAPON_NONE;
     StartWeapon startWeapon;
     std::vector<MonsterTemplate> db = GetMonsterDb(); // ดึงข้อมูลมอนสเตอร์จากฐานข้อมูล  
-    Map gridMap; // สุ่มสร้างแผนที่ใหม่
-    gridMap.LoadAssets(); // โหลดทรัพยากรของแผนที่ (เรียกครั้งเดียวตอนเริ่มเกม)
+    Map worldMap; // สุ่มสร้างแผนที่ใหม่
+    worldMap.LoadAssets(); // โหลดทรัพยากรของแผนที่ (เรียกครั้งเดียวตอนเริ่มเกม)
 
     Camera2D camera = { 0 };
     camera.zoom = 1.2f;
@@ -126,7 +126,7 @@ int main()
             if (plInvincTimer > 0) plInvincTimer -= dt;
             if (screenShake > 0) screenShake -= dt;
 
-            plUpdate(pl, gridMap);
+            plUpdate(pl, worldMap);
             Vector2 dir = {
             (float)(IsKeyDown(KEY_D) - IsKeyDown(KEY_A)),
             (float)(IsKeyDown(KEY_S) - IsKeyDown(KEY_W))
@@ -295,6 +295,14 @@ if (!enemies.empty())
                 }
             }
 
+            if (worldMap.HitSpike(pl.pos.x, pl.pos.y)) {
+                if (plInvincTimer <= 0) {
+                    pl.hp -= 10; 
+                    plInvincTimer = 0.6f;
+                    screenShake = 0.25f; 
+                }
+            }
+
             if (pl.hp <= 0) {
                 pl.hp = 0;
                 currentState = STATE_GAMEOVER;
@@ -413,7 +421,9 @@ if (!enemies.empty())
                     activeSkills.clear();
                 
                 // 4. เข้าเกม!
-                gridMap.obstacles.clear(); // เคลียร์สิ่งกีดขวางเก่า
+                worldMap.obstacles.clear(); // เคลียร์สิ่งกีดขวางเก่า
+                worldMap.decorations.clear(); // เคลียร์ของตกแต่งเก่า
+                worldMap.ravineBaseX = pl.pos.x; // ให้เริ่มจากตำแหน่งผู้เล่น
                 currentState = STATE_PLAYING;
             }
 
@@ -428,10 +438,10 @@ if (!enemies.empty())
             ? Vector2Normalize(diff)
             : (Vector2){1,0};
 
-            gridMap.UpdateEndless(pl.pos);
+            worldMap.UpdateMap(pl.pos);
 
             BeginMode2D(camera);
-                gridMap.Draw(pl.pos, screenWidth, screenHeight); 
+                worldMap.Draw(pl.pos, screenWidth, screenHeight); 
                 DrawSkillEffects(skills, pl);
                 for (const auto& g : gems) DrawCircleV(g.pos, 5, SKYBLUE); 
                 for (const auto& b : pBullets) DrawCircleV(b.pos, 5, YELLOW); 
@@ -511,7 +521,7 @@ if (!enemies.empty())
     }
 
     // ปิดหน้าต่างและคืนค่าทรัพยากร
-    gridMap.UnloadAssets();
+    worldMap.UnloadAssets();
     UnloadTexture(lobbygame);
     CloseWindow();
     return 0;

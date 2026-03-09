@@ -57,13 +57,6 @@ void plUpdate(player &pl, Map &map);
 
 void plMovement(Vector2 &plPos, float speed);
 
-void plCollision(
-    Vector2 &plPos,
-    Vector2 plSize,
-    float plSpeed,
-    Map &map
-);
-
 void DrawPlayer(player &pl);
 
 #endif
