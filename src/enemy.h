@@ -51,7 +51,7 @@ struct Enemy
     float frameTimer;
     float frameSpeed;
 
-   
+   bool facingRight = true;
 
     // ===================
     // RANGED

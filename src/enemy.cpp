@@ -29,7 +29,7 @@ void InitEnemy(Enemy& e, Vector2 pos, EnemyType type)
         e.atk = 10;
 
         e.frameCount = 9;
-        e.frameSpeed = 0.2f;
+        e.frameSpeed = 0.1f;
 
     break;
 
@@ -58,14 +58,14 @@ void InitEnemy(Enemy& e, Vector2 pos, EnemyType type)
         e.texture = LoadTexture("assets/monster/poison.png");
         SetTextureFilter(e.texture, TEXTURE_FILTER_POINT);
 
-        scale = 0.15f;   // poison monster
+        scale = 0.2f;   // poison monster
 
         e.hp = 120;
         e.speed = 1.3f;
         e.atk = 1;
 
-        e.frameCount = 4;
-        e.frameSpeed = 0.18f;
+        e.frameCount = 7;
+        e.frameSpeed = 0.1f;
 
         e.poisonRadius = 120;
         e.poisonInterval = 0.5f;
@@ -138,6 +138,11 @@ void UpdateEnemy(Enemy& e, Vector2 playerPos)
 
     Vector2 dir = Vector2Subtract(playerPos, e.pos);
     float dist = Vector2Length(dir);
+
+    if(playerPos.x < e.pos.x)
+    e.facingRight = false;
+    else
+    e.facingRight = true;
 
     e.frameTimer += GetFrameTime();
 
@@ -252,9 +257,16 @@ void DrawEnemy(const Enemy& e)
     e.size.y
 };
 
+Rectangle src = e.frameRec;
+
+if(!e.facingRight)
+{
+    src.width = -src.width;
+}
+
 DrawTexturePro(
     e.texture,
-    e.frameRec,
+    src,
     dest,
     {0,0},
     0,

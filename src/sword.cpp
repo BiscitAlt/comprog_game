@@ -35,7 +35,7 @@ void InitSword(Sword& s, Vector2 dropPos, SwordType type)
         case SWORD_LIFESTEAL:
             s.cooldown = 0.6f;
             s.damage = 6;              // ดาเมจเบา
-            s.lifeStealPercent = 0.2f;  // ดูด 20% ของดาเมจ
+            s.lifeStealPercent = 0.4f;  // ดูด 40% ของดาเมจ
             s.manaCost = 0;
             break;
     }
