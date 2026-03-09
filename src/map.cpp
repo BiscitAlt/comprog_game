@@ -14,7 +14,6 @@ void Map::UnloadAssets() {
 }
 
 void Map::UpdateEndless(Vector2 playerPos) {
-    float spawnRadius = 800.0f; // ระยะที่จะเสกสิ่งกีดขวาง (นอกจอหน่อยๆ)
     float despawnRadius = 1200.0f; // ถ้ายืนห่างเกินระยะนี้ ลบสิ่งกีดขวางทิ้ง
 
     // 1. ลบสิ่งกีดขวางที่อยู่ไกลเกินไป (ลดภาระเครื่อง)
@@ -42,12 +41,20 @@ void Map::UpdateEndless(Vector2 playerPos) {
         // ==========================================
         
         // 1. แบบแปลน "เสาหิน" 5 ชั้น (เรียงขึ้นไปด้านบน เลยใช้ Y ติดลบ)
-        std::vector<BlueprintPiece> pillarBlueprint = {
-            {0,  0, 23}, // ฐานล่างสุด
-            {0, -1, 24}, // ชั้น 2
-            {0, -2, 25}, // ชั้น 3
-            {0, -3, 26}, // ชั้น 4
-            {0, -4, 27}  // ยอดเสาบนสุด
+        std::vector<BlueprintPiece> verticalPillarBlueprint = {
+            {0,  0, 4}, // ฐานล่างสุด
+            {0, -1, 5}, // ชั้น 2
+            {0, -2, 6}, // ชั้น 3
+            {0, -3, 7}, // ชั้น 4
+            {0, -4, 8}  // ยอดเสาบนสุด
+        };
+
+        std::vector<BlueprintPiece> horizontalPillarBlueprint = {
+            {0, 0, 9}, // ฐาน
+            {+1, 0, 10},
+            {+2, 0, 11},
+            {+3, 0, 12}, 
+            {+4, 0, 13}  // ยอด
         };
 
         // 2. แบบแปลน "กำแพง 2x2" (ตัวอย่างของชิ้นใหญ่กว้างๆ)
@@ -57,26 +64,46 @@ void Map::UpdateEndless(Vector2 playerPos) {
         };
 
         // สุ่มว่าจะสร้างสิ่งก่อสร้างแบบไหน
-        int randStructure = GetRandomValue(0, 1);
+        int randStructure = GetRandomValue(0, 2);
         std::vector<BlueprintPiece> selectedBlueprint;
         
         switch (randStructure)
         {
         case 0:
-            selectedBlueprint = pillarBlueprint;
+            selectedBlueprint = verticalPillarBlueprint;
             break;
         case 1:
+            selectedBlueprint = horizontalPillarBlueprint;
+            break;
+        case 2:
             selectedBlueprint = boxBlueprint;
             break;
         }
 
-        // วนลูปเสกชิ้นส่วนตามแบบแปลนที่สุ่มได้
+        // ==========================================
+        // เพิ่มระบบเช็คการทับซ้อน (Collision Detection ก่อนสร้าง)
+        // ==========================================
+        bool canPlace = true;
         for (const auto& piece : selectedBlueprint) {
-            Obstacle obs;
-            obs.pos.x = newPos.x + (piece.offsetX * tileSize);
-            obs.pos.y = newPos.y + (piece.offsetY * tileSize);
-            obs.type = piece.type;
-            obstacles.push_back(obs);
+            float checkX = newPos.x + (piece.offsetX * tileSize);
+            float checkY = newPos.y + (piece.offsetY * tileSize);
+            
+            // ใช้ IsWall เช็คจุดกึ่งกลางของช่องว่ามีอะไรอยู่ไหม (+16 เพื่อให้อยู่ตรงกลางพอดี)
+            if (IsWall(checkX + (tileSize / 2.0f), checkY + (tileSize / 2.0f))) {
+                canPlace = false; // ถ้าทับ ให้ยกเลิกการสร้างทั้งแบบแปลน
+                break; 
+            }
+        }
+
+        // ถ้าไม่มีอะไรทับเลย ถึงจะยอมให้สร้างได้
+        if (canPlace) {
+            for (const auto& piece : selectedBlueprint) {
+                Obstacle obs;
+                obs.pos.x = newPos.x + (piece.offsetX * tileSize);
+                obs.pos.y = newPos.y + (piece.offsetY * tileSize);
+                obs.type = piece.type;
+                obstacles.push_back(obs);
+            }
         }
     }
 }
@@ -113,12 +140,16 @@ void Map::Draw(Vector2 playerPos, int screenWidth, int screenHeight) {
     for (const auto& obs : obstacles) {
         Rectangle crop = {0, 0, 16, 16};
         // คำนวณ crop ตาม type ที่สุ่มมา (ใช้โค้ดเดิมของคุณประยุกต์ได้เลย)
-        if (obs.type >= 23 && obs.type <= 27) {
-            crop.y = 112;
-            crop.x = (obs.type - 23) * 16;
+        if (obs.type >= 4 && obs.type <= 8) {
+            crop.y = 16;
+            crop.x = (obs.type - 4) * 16;
+        }
+        if (obs.type >= 9 && obs.type <= 13) {
+            crop.y = 32;
+            crop.x = (obs.type - 9) * 16;
         }
         if (obs.type >= 14 && obs.type <= 21) {
-            crop.y = 16;
+            crop.y = 148;
             crop.x = (obs.type - 14) * 16;
         }
         

@@ -411,7 +411,9 @@ if (!enemies.empty())
                     skills.shockwaveTimer = -9999;
 
                     activeSkills.clear();
+                
                 // 4. เข้าเกม!
+                gridMap.obstacles.clear(); // เคลียร์สิ่งกีดขวางเก่า
                 currentState = STATE_PLAYING;
             }
 
