@@ -29,7 +29,7 @@ void InitEnemy(Enemy& e, Vector2 pos, EnemyType type)
         e.atk = 10;
 
         e.frameCount = 9;
-        e.frameSpeed = 0.05f;
+        e.frameSpeed = 0.2f;
 
     break;
 
@@ -38,14 +38,14 @@ void InitEnemy(Enemy& e, Vector2 pos, EnemyType type)
         e.texture = LoadTexture("assets/monster/goblin.png");
         SetTextureFilter(e.texture, TEXTURE_FILTER_POINT);
 
-        scale = 0.12f;   // goblin
+        scale = 0.18f;   // goblin
 
         e.hp = 50;
         e.speed = 0.8f;
         e.atk = 5;
 
-        e.frameCount = 8;
-        e.frameSpeed = 0.10f;
+        e.frameCount = 6;
+        e.frameSpeed = 0.18f;
 
         e.shootCooldown = 1.8f;
         e.shootRange = 350;
@@ -78,13 +78,13 @@ void InitEnemy(Enemy& e, Vector2 pos, EnemyType type)
         e.texture = LoadTexture("assets/monster/bomb.png");
         SetTextureFilter(e.texture, TEXTURE_FILTER_POINT);
 
-        scale = 0.18f;   // bomb
+        scale = 0.12f;   // bomb
 
         e.hp = 20;
         e.speed = 1.8f;
         e.atk = 45;
 
-        e.frameCount = 5;
+        e.frameCount = 4;
         e.frameSpeed = 0.10f;
 
         e.explodeRadius = 110;
