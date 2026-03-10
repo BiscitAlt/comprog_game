@@ -36,6 +36,8 @@ public:
     std::vector<Obstacle> obstacles;
     std::vector<Decoration> decorations;
 
+    bool GenerateMap = false;
+
     void LoadAssets();
     void UnloadAssets();
     void UpdateMap(Vector2 playerPos); 

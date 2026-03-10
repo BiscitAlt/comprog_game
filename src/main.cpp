@@ -394,6 +394,9 @@ if (!enemies.empty())
             int titleWidth = MeasureText(title, 50);
             DrawText(title, (screenWidth/2 - titleWidth/2) + 2, 152, 50, Fade(BLACK, 0.5f)); 
             DrawText(title, screenWidth/2 - titleWidth/2, 150, 50, GOLD);
+
+            worldMap.GenerateMap = true;
+            worldMap.UpdateMap(pl.pos);
             
             if (DrawMenuButton({ 260, 300, 200, 60 }, "START ", DARKPURPLE)) {
                 // 1. รีเซ็ตผู้เล่น
@@ -489,8 +492,6 @@ if (!enemies.empty())
                     activeSkills.clear();
                 
                 // 4. เข้าเกม!
-                worldMap.obstacles.clear(); // เคลียร์สิ่งกีดขวางเก่า
-                worldMap.decorations.clear(); // เคลียร์ของตกแต่งเก่า
                 currentState = STATE_PLAYING;
             }
 
@@ -505,6 +506,7 @@ if (!enemies.empty())
             ? Vector2Normalize(diff)
             : (Vector2){1,0};
 
+            worldMap.GenerateMap = false;
             worldMap.UpdateMap(pl.pos);
 
             BeginMode2D(camera);
@@ -578,6 +580,9 @@ if (!enemies.empty())
             if (DrawMenuButton({ 260, 380, 200, 60 }, "BACK TO MENU", DARKGRAY)) {
                 currentState = STATE_MENU;
             }
+
+            worldMap.obstacles.clear(); // เคลียร์สิ่งกีดขวางเก่า
+            worldMap.decorations.clear(); // เคลียร์ของตกแต่งเก่า
         }
 
           

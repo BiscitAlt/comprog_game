@@ -1,9 +1,7 @@
 #include "map.h"
 
-// ============================================================
 // TileHash — stable per-position hash, never touches global RNG.
 // Uses Murmur3 finalizer mix for good distribution.
-// ============================================================
 static unsigned int TileHash(int x, int y) {
     unsigned int h = (unsigned int)(x * 2246822519u ^ y * 3266489917u);
     h ^= h >> 16; h *= 0x85ebca6bu;
@@ -95,7 +93,7 @@ void Map::UpdateMap(Vector2 playerPos) {
     // lambda: random spawn position near player
     auto randomNearPos = [&]() -> Vector2 {
         float angle = GetRandomValue(0, 360) * DEG2RAD;
-        float dist  = (float)GetRandomValue(600, 800);
+        float dist  = {GenerateMap ? (float)GetRandomValue(10,600) : (float)GetRandomValue(600,800)};
         return {
             roundf((playerPos.x + cosf(angle) * dist) / tileSize) * tileSize,
             roundf((playerPos.y + sinf(angle) * dist) / tileSize) * tileSize
