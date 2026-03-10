@@ -254,7 +254,7 @@ if (!enemies.empty())
             }
 
             for (int i = enemies.size() - 1; i >= 0; i--) {
-                UpdateEnemy(enemies[i], pl.pos);
+                UpdateEnemy(enemies[i], pl.pos, worldMap);
                 // ===== POISON DAMAGE =====
                 if (enemies[i].type == POISON && enemies[i].poisonActive)
                 {

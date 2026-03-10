@@ -1,5 +1,6 @@
 #include "player.h"
 #include "raymath.h"
+#include "map.h"
 
 // ======================
 // Update Player
@@ -11,16 +12,8 @@ void plUpdate(player &pl, Map &map)
     
     plMovement(pl);
 
-    // เช็คว่าตำแหน่งใหม่ชนกำแพงหรือไม่ (เช็คจาก 4 มุมของตัวละคร)
-    bool hitWall = map.IsWall(pl.pos.x, pl.pos.y) || 
-                   map.IsWall(pl.pos.x + pl.size.x, pl.pos.y) || 
-                   map.IsWall(pl.pos.x, pl.pos.y + pl.size.y) || 
-                   map.IsWall(pl.pos.x + pl.size.x, pl.pos.y + pl.size.y);
-
-    // ถ้าตำแหน่งใหม่เป็นกำแพง ให้ดึงตัวละครกลับมาจุดก่อนเดิน
-    if (hitWall) {
-        pl.pos = oldPos;
-    }
+    // เช็คว่าตำแหน่งใหม่ชนกำแพงหรือไม่
+    if (IsEntityColliding(pl.pos, pl.size, map)) pl.pos = oldPos;
 }
 
 // ======================

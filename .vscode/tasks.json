@@ -17,6 +17,7 @@
                 "-lraylib",
                 "-lgdi32",
                 "-lwinmm",
+                "-static"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
