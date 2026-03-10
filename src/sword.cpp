@@ -20,22 +20,22 @@ void InitSword(Sword& s, Vector2 dropPos, SwordType type)
     switch (s.type)
     {
         case SWORD_ENERGY:
-            s.cooldown = 0.5f;
-            s.damage = 25;
+            s.cooldown = 0.4f;
+            s.damage = 30;
             s.manaCost = 0;
             break;
 
         case SWORD_SPIN:
-            s.cooldown = 1.0f;
-            s.damage = 35;
+            s.cooldown = 0.8f;
+            s.damage = 50;
             s.spinRadius = 80;
             s.manaCost = 0;
             break;
 
         case SWORD_LIFESTEAL:
             s.cooldown = 0.6f;
-            s.damage = 10;              // ดาเมจเบา
-            s.lifeStealPercent = 0.2f;  // ดูด 40% ของดาเมจ
+            s.damage = 20;              // ดาเมจเบา
+            s.lifeStealPercent = 0.1f;  // ดูด  ของดาเมจ
             s.manaCost = 0;
             break;
     }
@@ -79,7 +79,7 @@ void UpdateSword(Sword& s,Vector2 plPos,Vector2 plSize,Vector2 dir,std::vector<E
     s.effectHitActive = false;
     }    
 
-    if (!s.pickedUp)
+    if (!s.pickedUp) // เหมือนจะไม่ได้ใช้แล้ว
     {
         Rectangle swordRec = { s.pos.x, s.pos.y, 30, 10 };
         Rectangle plRec = { plPos.x, plPos.y, plSize.x, plSize.y };
@@ -101,7 +101,7 @@ void UseSword(
     if (s.timer > 0)
         return;
 
-    // ===== MANA CHECK =====
+    // ===== เปลี่ยนใหม่เป็น No use mana =====
     if (s.type == SWORD_ENERGY)
     {
         if (pl.mana < s.manaCost)
@@ -143,7 +143,7 @@ void UseSword(
             w.pos = pl.pos;
             w.dir = { cosf(angle), sinf(angle) };
             w.speed = 500;
-            w.damage = s.damage;
+            w.damage = s.damage; 
             w.active = true;
 
             waves.push_back(w);

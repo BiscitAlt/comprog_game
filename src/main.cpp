@@ -331,24 +331,31 @@ if (!enemies.empty())
                 pl.expNext += 10;
                 pl.hp = pl.hpMax;
 
-                if(pl.level == 3 || pl.level == 5 || pl.level == 9 || pl.level == 15)
+                if(pl.level == 2 || pl.level == 5 || pl.level == 8 || pl.level == 11)
 {
-                if(activeSkills.size() < MAX_SKILLS)
-                {
-                    int newSkill = GetRandomSkill();
-                    activeSkills.push_back(newSkill);
+    if(activeSkills.size() < MAX_SKILLS)
+    {
+        int newSkill;
 
-                    switch(newSkill)
-                    {
-                        case 0: skills.voidMeteorTimer = 0; break;
-                        case 1: skills.phantomBladeTimer = 0; break;
-                        case 2: skills.chainLightningTimer = 0; break;
-                        case 3: skills.poisonMistTimer = 0; break;
-                        case 4: skills.blackHoleTimer = 0; break;
-                        case 5: skills.bloodAuraTimer = 0; break;
-                        case 6: skills.shockwaveTimer = 0; break;
-                    }
-                }
+        do
+        {
+            newSkill = GetRandomSkill();
+        }
+        while(std::find(activeSkills.begin(), activeSkills.end(), newSkill) != activeSkills.end());
+
+        activeSkills.push_back(newSkill);
+
+        switch(newSkill)
+        {
+            case 0: skills.voidMeteorTimer = 0; break;
+            case 1: skills.phantomBladeTimer = 0; break;
+            case 2: skills.chainLightningTimer = 0; break;
+            case 3: skills.poisonMistTimer = 0; break;
+            case 4: skills.blackHoleTimer = 0; break;
+            case 5: skills.bloodAuraTimer = 0; break;
+            case 6: skills.shockwaveTimer = 0; break;
+        }
+    }
 }
 }
                 }
