@@ -12,14 +12,20 @@ static unsigned int TileHash(int x, int y) {
     return h;
 }
 
-void Map::LoadAssets() {
-    tileset = LoadTexture("assets\\tileset.png");
-    if (tileset.id == 0) TraceLog(LOG_ERROR, "FAILED TO LOAD TILESET!");
-    else TraceLog(LOG_INFO, "TILESET LOADED SUCCESSFULLY!");
-}
+// Obstascle Blueprint {x offset, y offset, tileID}
+static const std::vector<BlueprintPiece> verticalPillarBlueprint = {{0,  0, 4}, {0, -1, 5}, {0, -2, 6}, {0, -3, 7}, {0, -4, 8}};
+static const std::vector<BlueprintPiece> horizontalPillarBlueprint = {{0, 0, 9},{+1, 0, 10},{+2, 0, 11},{+3, 0, 12}, {+4, 0, 13}};
 
-void Map::UnloadAssets() {
-    UnloadTexture(tileset);
+// Pool of all decoration
+static const std::vector<DecorationDef>& GetDecorationPool() {
+    static std::vector<DecorationDef> decorationPool;
+    if (decorationPool.empty()) {
+        decorationPool.push_back({ {{0,0,14}, {0,0,15}, {0,0,16}, {0,0,17}}, false }); // vase
+        decorationPool.push_back({ {{0,0,18}, {1,0,19}, {0,1,20}, {1,1,21}}, true });  // broken tiles
+        decorationPool.push_back({ {{0,0,22}, {0,0,23}, {0,0,24}, {0,0,25}}, false }); // candle
+        decorationPool.push_back({ {{0,0,26}}, false });                               // spike
+    }
+    return decorationPool;
 }
 
 // GetCrop — converts a tile ID to its source rectangle on the tileset
@@ -59,50 +65,34 @@ static void SpawnDecoration(std::vector<Decoration>& decorations, const Decorati
     }
 }
 
+template<typename T>
+static void DespawnDistant(std::vector<T>& list, Vector2 playerPos, float maxDistSq) {
+    for (int i = list.size() - 1; i >= 0; i--) {
+        float distX = playerPos.x - list[i].pos.x;
+        float distY = playerPos.y - list[i].pos.y;
+        if ((distX * distX) + (distY * distY) > maxDistSq) {
+            list.erase(list.begin() + i);
+        }
+    }
+}
+
+void Map::LoadAssets() {
+    tileset = LoadTexture("assets\\tileset.png");
+    if (tileset.id == 0) TraceLog(LOG_ERROR, "FAILED TO LOAD TILESET!");
+    else TraceLog(LOG_INFO, "TILESET LOADED SUCCESSFULLY!");
+}
+
+void Map::UnloadAssets() {
+    UnloadTexture(tileset);
+}
+
 void Map::UpdateMap(Vector2 playerPos) {
     const float despawnRadiusSq = 1200.0f * 1200.0f;
     // 1. Erase further obstascles
-    for (int i = obstacles.size() - 1; i >= 0; i--) {
-        float distX = playerPos.x - obstacles[i].pos.x;
-        float distY = playerPos.y - obstacles[i].pos.y;
-        float distSq = (distX * distX) + (distY * distY);
-        
-        if (distSq > despawnRadiusSq) 
-            obstacles.erase(obstacles.begin() + i);
-    }
+    DespawnDistant(obstacles, playerPos, despawnRadiusSq);
+    DespawnDistant(decorations, playerPos, despawnRadiusSq);
 
-    for (int i = decorations.size() - 1; i >= 0; i--) {
-        float distX = playerPos.x - decorations[i].pos.x;
-        float distY = playerPos.y - decorations[i].pos.y;
-        float distSq = (distX * distX) + (distY * distY);
-        
-        if (distSq > despawnRadiusSq)
-            decorations.erase(decorations.begin() + i);
-    }
-
-    // Obstascle Blueprint {x offset, y offset, tileID}
-    std::vector<BlueprintPiece> verticalPillarBlueprint = {{0,  0, 4}, {0, -1, 5}, {0, -2, 6}, {0, -3, 7}, {0, -4, 8}};
-
-    std::vector<BlueprintPiece> horizontalPillarBlueprint = {{0, 0, 9},{+1, 0, 10},{+2, 0, 11},{+3, 0, 12}, {+4, 0, 13}};
-
-    // Decoration definitions
-    DecorationDef vaseDef;
-    vaseDef.pieces    = {{0,0,14}, {0,0,15}, {0,0,16}, {0,0,17}};
-
-    DecorationDef brokenTilesDef;
-    brokenTilesDef.multiTile = true;
-    brokenTilesDef.pieces    = {{0,0,18}, {1,0,19}, {0,1,20}, {1,1,21}};
-
-    DecorationDef candleDef;
-    candleDef.pieces    = {{0,0,22}, {0,0,23}, {0,0,24}, {0,0,25}};
-
-    DecorationDef spikeDef;
-    spikeDef.pieces    = {{0,0,26}};
-
-    // --- Pool of all decoration types ---
-    std::vector<DecorationDef> decorationPool = { vaseDef, brokenTilesDef, candleDef, spikeDef };
-
-    // ---- Helper lambda: random spawn position near player ----
+    // lambda: random spawn position near player
     auto randomNearPos = [&]() -> Vector2 {
         float angle = GetRandomValue(0, 360) * DEG2RAD;
         float dist  = (float)GetRandomValue(600, 800);
@@ -113,7 +103,7 @@ void Map::UpdateMap(Vector2 playerPos) {
     };
 
     // ---- Spawn new obstacles (pillars) ----
-    if (obstacles.size() < 25) {
+    if (obstacles.size() < maxObstacles) {
         Vector2 newPos = randomNearPos();
 
         int randStructure = GetRandomValue(0, 1);
@@ -130,15 +120,16 @@ void Map::UpdateMap(Vector2 playerPos) {
         }
 
     // ---- Spawn decorations ----
-    if (decorations.size() < 200) {
+    if (decorations.size() < maxDecorations) {
         Vector2 newPos = randomNearPos();
         float   cx     = newPos.x + tileSize * 0.5f;
         float   cy     = newPos.y + tileSize * 0.5f;
 
         if (!IsWall(cx, cy)) {
+            const auto& pool = GetDecorationPool();
             // Pick a random decoration type from the pool
-            int pick = GetRandomValue(0, (int)decorationPool.size() - 1);
-            SpawnDecoration(decorations, decorationPool[pick], newPos, tileSize);
+            int pick = GetRandomValue(0, (int)pool.size() - 1);
+            SpawnDecoration(decorations, pool[pick], newPos, tileSize);
         }
     }
 }
@@ -178,6 +169,13 @@ void Map::Draw(Vector2 playerPos, int screenWidth, int screenHeight) {
         Rectangle dest = { obs.pos.x, obs.pos.y, (float)tileSize, (float)tileSize };
         DrawTexturePro(tileset, crop, dest, {0,0}, 0.0f, WHITE);
     }
+}
+
+bool IsEntityColliding(Vector2 pos, Vector2 size, Map& map) {
+    return map.IsWall(pos.x, pos.y) || 
+           map.IsWall(pos.x + size.x, pos.y) || 
+           map.IsWall(pos.x, pos.y + size.y) || 
+           map.IsWall(pos.x + size.x, pos.y + size.y);
 }
 
 bool Map::IsWall(float x, float y) {

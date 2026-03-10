@@ -28,6 +28,8 @@ struct DecorationDef {
 
 class Map {
 public:
+    const int maxObstacles = 25;
+    const int maxDecorations = 200;
     static const int tileSize = 32;
     Texture2D tileset;
     
@@ -42,5 +44,7 @@ public:
     bool IsWall(float x, float y);
     bool HitSpike(float x, float y);
 };
+
+bool IsEntityColliding(Vector2 pos, Vector2 size, Map& map);
 
 #endif

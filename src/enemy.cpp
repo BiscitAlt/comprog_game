@@ -182,15 +182,7 @@ e.frameRec.x = e.currentFrame * e.frameRec.width;
     }
 
     // Check if enemies hit wall
-    bool hitWall = map.IsWall(e.pos.x, e.pos.y) || 
-                   map.IsWall(e.pos.x + e.size.x, e.pos.y) || 
-                   map.IsWall(e.pos.x, e.pos.y + e.size.y) || 
-                   map.IsWall(e.pos.x + e.size.x, e.pos.y + e.size.y);
-
-    // next position = old position
-    if (hitWall) {
-        e.pos = oldPos;
-    }
+    if (IsEntityColliding(e.pos, e.size, map)) e.pos = oldPos;
 
     // =================
     // RANGED SHOOT
