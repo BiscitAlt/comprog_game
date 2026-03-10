@@ -182,7 +182,7 @@ void DrawMagicProjectiles(
         {
             float progress = 1.0f - (m.effectTimer / 0.3f);
 
-            // 🔥 FIRE ระเบิดขยาย
+            // FIRE ระเบิดขยาย
             if (m.type == FIRE)
             {
                 float radius = 20 + progress * 40;
@@ -207,7 +207,7 @@ void DrawMagicProjectiles(
             float progress = 1.0f - (m.effectTimer / totalTime);
 
             // ----------------------
-            // ❄ ICE HIT ธรรมดา
+            //  ICE HIT ธรรมดา
             // ----------------------
             if (m.effectType == EFFECT_HIT)
              {
@@ -229,7 +229,7 @@ void DrawMagicProjectiles(
     }
 
             // ----------------------
-            // 💥 ICE EXPLOSION (3 stack)
+            // ICE EXPLOSION (3 stack)
             // ----------------------
         if (m.effectType == EFFECT_ICE_EXPLODE)
     {
@@ -261,7 +261,7 @@ void DrawMagicProjectiles(
     }
 }
 
-            // ⚡ LIGHTNING แฟลชสายฟ้า
+            // LIGHTNING แฟลชสายฟ้า
             if (m.type == LIGHTNING)
             {
                 DrawLineEx(
