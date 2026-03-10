@@ -99,7 +99,7 @@ void UpdateSkills(
 
             if(CheckCollisionRecs(bladeRec,enemyRec))
             {
-                e.hp -= 18 * dt;
+                e.hp -= 20 * dt;
             }
         }
     }
@@ -122,7 +122,7 @@ void UpdateSkills(
 
         for(int i=0;i<8;i++)
         {
-            Enemy* next = FindClosestEnemy(currentPos,enemies,220);
+            Enemy* next = FindClosestEnemy(currentPos,enemies,300);
 
             if(!next) break;
 
@@ -212,7 +212,7 @@ void UpdateSkills(
     }
 
     // BLOOD AURA
-    if(s.bloodAuraTimer > 1.0f)
+    if(s.bloodAuraTimer > 1.5f)
     {
         s.bloodAuraEffect = 0.5f;
 
