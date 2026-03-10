@@ -212,7 +212,7 @@ void UpdateSkills(
     }
 
     // BLOOD AURA
-    if(s.bloodAuraTimer > 1.5f)
+    if(s.bloodAuraTimer > 2.0f)
     {
         s.bloodAuraEffect = 0.5f;
 
@@ -224,7 +224,7 @@ void UpdateSkills(
             {
                 e.hp -=18 * dt;
 
-                pl.hp += 2;
+                pl.hp += 1;
 
                 if(pl.hp > pl.hpMax)
                     pl.hp = pl.hpMax;

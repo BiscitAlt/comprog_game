@@ -130,7 +130,7 @@ void InitEnemy(Enemy& e, Vector2 pos, std::string name, int hp, int atk)
     e.bullets.clear();
 }
 
-void UpdateEnemy(Enemy& e, Vector2 playerPos,Map& map)
+void UpdateEnemy(Enemy& e, Vector2 playerPos,Map& map) 
 {
     if (map.HitSpike(e.pos.x, e.pos.y)) e.hp -= 20;
 
