@@ -12,10 +12,17 @@ static unsigned int TileHash(int x, int y) {
     return h;
 }
 
-// ============================================================
+void Map::LoadAssets() {
+    tileset = LoadTexture("assets\\tileset.png");
+    if (tileset.id == 0) TraceLog(LOG_ERROR, "FAILED TO LOAD TILESET!");
+    else TraceLog(LOG_INFO, "TILESET LOADED SUCCESSFULLY!");
+}
+
+void Map::UnloadAssets() {
+    UnloadTexture(tileset);
+}
+
 // GetCrop — converts a tile ID to its source rectangle on the tileset
-// Add new ID ranges here whenever you add new tile types
-// ============================================================
 static Rectangle GetCrop(int id) {
     if (id >= 0  && id <= 3)  return {  id * 16.0f,        0.0f, 16.0f, 16.0f }; // floor
     if (id >= 4  && id <= 8)  return { (id - 4)  * 16.0f, 16.0f, 16.0f, 16.0f }; // vertical pillar
@@ -27,23 +34,7 @@ static Rectangle GetCrop(int id) {
     return { 0.0f, 0.0f, 16.0f, 16.0f }; // fallback
 }
 
-void Map::LoadAssets() {
-    tileset = LoadTexture("assets\\tileset.png");
-    if (tileset.id == 0) tileset = LoadTexture("src\\assets\\tileset.png");
-    if (tileset.id == 0) TraceLog(LOG_ERROR, "FAILED TO LOAD TILESET! Check path: assets/tileset.png");
-    else TraceLog(LOG_INFO, "TILESET LOADED SUCCESSFULLY!");
-}
-
-void Map::UnloadAssets() {
-    UnloadTexture(tileset);
-}
-
-// ============================================================
 // SpawnDecoration — internal helper
-//
-//  multiTile = false → pick ONE random piece from def.pieces and place it at origin
-//  multiTile = true  → place EVERY piece at its (offsetX, offsetY) from origin
-// ============================================================
 static void SpawnDecoration(std::vector<Decoration>& decorations, const DecorationDef& def, Vector2 origin, int tileSize)
 {
     if (def.pieces.empty()) return;
@@ -52,31 +43,32 @@ static void SpawnDecoration(std::vector<Decoration>& decorations, const Decorati
         // Single-tile variant: choose one piece at random
         int pick = GetRandomValue(0, (int)def.pieces.size() - 1);
         const BlueprintPiece& piece = def.pieces[pick];
-        decorations.push_back({{origin.x + piece.offsetX * tileSize, origin.y + piece.offsetY * tileSize}, piece.ID});
+            decorations.push_back({
+                {origin.x + piece.offsetX * tileSize, 
+                 origin.y + piece.offsetY * tileSize}, 
+                 piece.ID
+            });
     } else {
         // Multi-tile: place every piece at its offset
-        for (const auto& piece : def.pieces) {
+        for (const auto& piece : def.pieces)
             decorations.push_back({
                 { origin.x + piece.offsetX * tileSize,
                   origin.y + piece.offsetY * tileSize },
                 piece.ID
             });
-        }
     }
 }
 
 void Map::UpdateMap(Vector2 playerPos) {
-    const float despawnRadiusSq = 1200.0f * 1200.0f; // ถ้ายืนห่างเกินระยะนี้ ลบสิ่งกีดขวางทิ้ง
-
-    // 1. ลบสิ่งกีดขวางที่อยู่ไกลเกินไป (ลดภาระเครื่อง)
+    const float despawnRadiusSq = 1200.0f * 1200.0f;
+    // 1. Erase further obstascles
     for (int i = obstacles.size() - 1; i >= 0; i--) {
         float distX = playerPos.x - obstacles[i].pos.x;
         float distY = playerPos.y - obstacles[i].pos.y;
         float distSq = (distX * distX) + (distY * distY);
         
-        if (distSq > despawnRadiusSq) {
+        if (distSq > despawnRadiusSq) 
             obstacles.erase(obstacles.begin() + i);
-        }
     }
 
     for (int i = decorations.size() - 1; i >= 0; i--) {
@@ -84,9 +76,8 @@ void Map::UpdateMap(Vector2 playerPos) {
         float distY = playerPos.y - decorations[i].pos.y;
         float distSq = (distX * distX) + (distY * distY);
         
-        if (distSq > despawnRadiusSq) {
+        if (distSq > despawnRadiusSq)
             decorations.erase(decorations.begin() + i);
-        }
     }
 
     // Obstascle Blueprint {x offset, y offset, tileID}
@@ -109,7 +100,6 @@ void Map::UpdateMap(Vector2 playerPos) {
     spikeDef.pieces    = {{0,0,26}};
 
     // --- Pool of all decoration types ---
-    // Add new DecorationDefs here to include them in random spawning.
     std::vector<DecorationDef> decorationPool = { vaseDef, brokenTilesDef, candleDef, spikeDef };
 
     // ---- Helper lambda: random spawn position near player ----
@@ -123,7 +113,7 @@ void Map::UpdateMap(Vector2 playerPos) {
     };
 
     // ---- Spawn new obstacles (pillars) ----
-    if (obstacles.size() < 50) {
+    if (obstacles.size() < 25) {
         Vector2 newPos = randomNearPos();
 
         int randStructure = GetRandomValue(0, 1);
@@ -140,7 +130,7 @@ void Map::UpdateMap(Vector2 playerPos) {
         }
 
     // ---- Spawn decorations ----
-    if (decorations.size() < 50) {
+    if (decorations.size() < 200) {
         Vector2 newPos = randomNearPos();
         float   cx     = newPos.x + tileSize * 0.5f;
         float   cy     = newPos.y + tileSize * 0.5f;
@@ -154,16 +144,13 @@ void Map::UpdateMap(Vector2 playerPos) {
 }
 
 void Map::Draw(Vector2 playerPos, int screenWidth, int screenHeight) {
-    // ---- 1. Floor ----
-    // TileHash gives a stable variant per tile coordinate — no flickering possible.
-    // Change FLOOR_VARIANTS to however many floor tile variants you have in your tileset.
+    // Floor
     static constexpr int FLOOR_VARIANTS = 4;
     
-    // หาพิกัดมุมซ้ายบนของกล้อง (สมมติกล้องอยู่กึ่งกลางผู้เล่น)
+    // Find top left corner
     float startX = playerPos.x - (screenWidth / 2.0f);
     float startY = playerPos.y - (screenHeight / 2.0f);
     
-    // ปัดเศษให้ลงล็อค tileSize เพื่อไม่ให้พื้นกระตุกเวลาเดิน
     int firstCol = (int)floorf(startX / tileSize);
     int firstRow = (int)floor(startY / tileSize);
     int colsToDraw = (screenWidth / tileSize) + 2;
@@ -178,14 +165,14 @@ void Map::Draw(Vector2 playerPos, int screenWidth, int screenHeight) {
         }
     }
 
-    // --- 3. Decorations (drawn under obstacles so pillars appear "in front") ---
+    // Decorations
     for (const auto& dec : decorations) {
         Rectangle crop = GetCrop(dec.ID);
         Rectangle dest = { dec.pos.x, dec.pos.y, (float)tileSize, (float)tileSize };
         DrawTexturePro(tileset, crop, dest, {0,0}, 0.0f, WHITE);
     }
 
-    // --- 4. Obstacles ---
+    // Obstacles
     for (const auto& obs : obstacles) {
         Rectangle crop = GetCrop(obs.ID);
         Rectangle dest = { obs.pos.x, obs.pos.y, (float)tileSize, (float)tileSize };
@@ -194,7 +181,6 @@ void Map::Draw(Vector2 playerPos, int screenWidth, int screenHeight) {
 }
 
 bool Map::IsWall(float x, float y) {
-    // เช็คว่าพิกัดที่เดินไป ชนกับสิ่งกีดขวางใน Vector หรือไม่
     for (const auto& obs : obstacles) {
         Rectangle obsRec = { obs.pos.x, obs.pos.y, (float)tileSize, (float)tileSize };
         if (CheckCollisionPointRec({x, y}, obsRec)) return true;
@@ -203,14 +189,12 @@ bool Map::IsWall(float x, float y) {
 }
 
 bool Map::HitSpike(float x, float y) {
-    // เช็คว่าพิกัดที่เดินไป ชนกับของตกแต่งที่เป็นอันตรายใน Vector หรือไม่
     for (const auto& dec : decorations) {
-        // ID 26 คือ spike
+        // ID 26 (spike)
         if (dec.ID == 26) {
             Rectangle decRec = { dec.pos.x, dec.pos.y, (float)tileSize, (float)tileSize };
             if (CheckCollisionPointRec({x, y}, decRec)) return true;
         }
     }
-
     return false;
 }

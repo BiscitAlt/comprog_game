@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include "bullet.h"
+#include "map.h"
 
 // =======================
 // ENEMY TYPE
@@ -100,7 +101,7 @@ void InitEnemy(Enemy& e, Vector2 pos, EnemyType type);
 
 void InitEnemy(Enemy& e, Vector2 pos, std::string name, int hp, int atk);
 
-void UpdateEnemy(Enemy& e, Vector2 playerPos);
+void UpdateEnemy(Enemy& e, Vector2 playerPos, Map& map);
 
 void DrawEnemy(const Enemy& e);
 

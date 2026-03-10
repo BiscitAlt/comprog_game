@@ -130,8 +130,10 @@ void InitEnemy(Enemy& e, Vector2 pos, std::string name, int hp, int atk)
     e.bullets.clear();
 }
 
-void UpdateEnemy(Enemy& e, Vector2 playerPos)
+void UpdateEnemy(Enemy& e, Vector2 playerPos,Map& map)
 {
+    if (map.HitSpike(e.pos.x, e.pos.y)) e.hp -= 20;
+
     if(e.hp <= 0) return;
 
     float delta = GetFrameTime();
@@ -158,6 +160,9 @@ if (e.frameTimer >= e.frameSpeed)
 
 e.frameRec.x = e.currentFrame * e.frameRec.width;
 }
+    // Store old position before calculate the next position
+    Vector2 oldPos = e.pos;
+
     if(e.type == RANGED && dist < 200)
     {
         if(dist > 1)
@@ -174,6 +179,17 @@ e.frameRec.x = e.currentFrame * e.frameRec.width;
             e.pos,
             Vector2Scale(Vector2Normalize(dir), e.speed)
         );
+    }
+
+    // Check if enemies hit wall
+    bool hitWall = map.IsWall(e.pos.x, e.pos.y) || 
+                   map.IsWall(e.pos.x + e.size.x, e.pos.y) || 
+                   map.IsWall(e.pos.x, e.pos.y + e.size.y) || 
+                   map.IsWall(e.pos.x + e.size.x, e.pos.y + e.size.y);
+
+    // next position = old position
+    if (hitWall) {
+        e.pos = oldPos;
     }
 
     // =================
